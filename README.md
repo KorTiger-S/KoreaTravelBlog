@@ -23,11 +23,18 @@ python scripts/run_cycle.py check-replies
 ```
 텔레그램에 새 답장이 있으면 확인합니다.
 - "승인"이면 → 이미 자동으로 Blogger에 발행되고 끝.
-- 피드백 텍스트면 → 원본 관광지 데이터와 피드백이 JSON으로 출력됨 → 에이전트가 그걸 보고 글을 다시 써서:
-  ```
-  python scripts/run_cycle.py revise-draft --title "..." --html-file revised.html
-  ```
-- 대기 중인 초안이 없으면(승인 완료 후):
+- 피드백 텍스트면 → 원본 관광지 데이터와 피드백이 JSON으로 출력됨 → 에이전트가 그 내용을 읽고 판단합니다.
+  - 지금 초안을 다듬어 달라는 요청이면, 원본 데이터를 기반으로 글을 고쳐 쓴 뒤:
+    ```
+    python scripts/run_cycle.py revise-draft --title "..." --html-file revised.html
+    ```
+  - "이 주제 말고 OOO 알려줘"처럼 **완전히 다른 주제를 요청**한 경우(대기 중인 초안이 있을 때든 없을 때든):
+    ```
+    python scripts/run_cycle.py search-topic --keyword "OOO"
+    python scripts/run_cycle.py fetch-detail --content-id <ID> --content-type-id <TYPE>
+    ```
+    로 사용자가 원하는 곳의 실제 데이터를 가져온 뒤, 그 데이터로 글을 써서 `revise-draft ... --content-id <새ID>`로 대기 중인 초안을 교체합니다(대기 중인 초안이 없었다면 `save-draft`로 새로 만듭니다).
+- 대기 중인 초안이 없고 사용자의 주제 요청도 없으면(승인 완료 후):
   ```
   python scripts/run_cycle.py fetch-next
   ```

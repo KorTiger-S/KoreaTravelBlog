@@ -1,8 +1,12 @@
 """텔레그램 봇 API 클라이언트 (초안 전송 + 승인/피드백 폴링)."""
 import os
+import sys
 
 import requests
 from dotenv import load_dotenv
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 load_dotenv()
 
@@ -17,12 +21,19 @@ def _require_config():
         raise RuntimeError("TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID가 설정되어 있지 않습니다 (.env 확인)")
 
 
+TELEGRAM_MAX_LEN = 4096
+
+
 def send_message(text):
+    """일반 텍스트로 전송. 블로그 HTML(<h3>/<ul>/<img> 등)은 텔레그램 HTML 파싱모드가
+    지원하지 않는 태그가 많아 parse_mode를 쓰지 않는다 — 미리보기는 항상 순수 텍스트로 변환해서 넘길 것."""
     _require_config()
+    if len(text) > TELEGRAM_MAX_LEN:
+        text = text[: TELEGRAM_MAX_LEN - 20] + "\n...(내용 일부 생략)"
     url = f"{API_BASE}/bot{BOT_TOKEN}/sendMessage"
     resp = requests.post(
         url,
-        json={"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"},
+        json={"chat_id": CHAT_ID, "text": text},
         timeout=15,
     )
     resp.raise_for_status()

@@ -1,11 +1,15 @@
 """Google Blogger API v3 클라이언트. token.json(OAuth refresh token)은
 generate_oauth_token.py로 로컬에서 1회 발급한다."""
 import os
+import sys
 
 from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 load_dotenv()
 
