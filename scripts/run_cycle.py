@@ -19,8 +19,11 @@
         필요시 WelcomeToKorea/ 같은 기존 검증 자료)을 바탕으로 글을 쓴 뒤
         `save-draft --content-id <tip id> ...`
      b) 팁 주제가 소진됐으면("no_tips_left") `fetch-next` 실행 → TourAPI 순회로 관광지 자동 선정
-  3) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성
-  4) `save-draft`로 초안 저장 + 텔레그램 전송
+  3) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성 (README의 콘텐츠 작성 원칙 준수:
+     소주제마다 사진 1장 이상, 한국 초행자 기준 쉬운 문장, 3년 이상 지난 정보/사진은 재검증)
+  4) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
+  5) `save-draft --content-id ... --html-file ... --summary-ko-file ...`로 초안 저장 + 텔레그램 전송
+     (한글 요약은 텔레그램 미리보기에만 들어가고 블로그 본문에는 안 들어감)
 
 사용법:
   python run_cycle.py check-replies
@@ -28,8 +31,8 @@
   python run_cycle.py fetch-next
   python run_cycle.py search-topic --keyword "Gyeongbokgung"
   python run_cycle.py fetch-detail --content-id 126508 --content-type-id 76
-  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508
-  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID]
+  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508 --summary-ko-file summary_ko.txt
+  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID] --summary-ko-file summary_ko.txt
   python run_cycle.py publish
 """
 import argparse
@@ -138,6 +141,13 @@ def _read_html(args):
     return sys.stdin.read()
 
 
+def _read_summary_ko(args):
+    if not args.summary_ko_file:
+        return ""
+    with open(args.summary_ko_file, "r", encoding="utf-8") as f:
+        return f.read().strip()
+
+
 def _html_to_preview_text(html):
     """텔레그램 미리보기용: 블로그 HTML을 읽기 쉬운 순수 텍스트로 변환.
     텔레그램 parse_mode=HTML은 <h3>/<ul>/<li>/<img> 같은 태그를 지원하지 않으므로
@@ -152,6 +162,7 @@ def _html_to_preview_text(html):
 
 def cmd_save_draft(args):
     html = _read_html(args)
+    summary_ko = _read_summary_ko(args)
     draft = {
         "content_id": args.content_id,
         "title": args.title,
@@ -160,8 +171,9 @@ def cmd_save_draft(args):
     }
     state.save_pending_draft(draft)
     preview = _html_to_preview_text(html)
+    summary_block = f"📝 한글 요약:\n{summary_ko}\n\n---\n\n" if summary_ko else ""
     telegram_client.send_message(
-        f"[새 초안]\n제목: {args.title}\n\n{preview}\n\n---\n승인하려면 '승인', 수정하려면 원하는 내용을 답장해주세요."
+        f"[새 초안]\n{summary_block}제목: {args.title}\n\n{preview}\n\n---\n승인하려면 '승인', 수정하려면 원하는 내용을 답장해주세요."
     )
     print(json.dumps({"status": "sent_for_approval"}, ensure_ascii=False))
 
@@ -172,6 +184,7 @@ def cmd_revise_draft(args):
         print(json.dumps({"status": "error", "message": "대기 중인 초안이 없습니다"}, ensure_ascii=False))
         return
     html = _read_html(args)
+    summary_ko = _read_summary_ko(args)
     pending["title"] = args.title
     pending["html"] = html
     if args.content_id:
@@ -179,8 +192,9 @@ def cmd_revise_draft(args):
         pending["content_id"] = args.content_id
     state.save_pending_draft(pending)
     preview = _html_to_preview_text(html)
+    summary_block = f"📝 한글 요약:\n{summary_ko}\n\n---\n\n" if summary_ko else ""
     telegram_client.send_message(
-        f"[수정된 초안]\n제목: {args.title}\n\n{preview}\n\n---\n승인하려면 '승인', 추가로 수정하려면 원하는 내용을 답장해주세요."
+        f"[수정된 초안]\n{summary_block}제목: {args.title}\n\n{preview}\n\n---\n승인하려면 '승인', 추가로 수정하려면 원하는 내용을 답장해주세요."
     )
     print(json.dumps({"status": "sent_for_approval"}, ensure_ascii=False))
 
@@ -216,11 +230,13 @@ def main():
     p_save.add_argument("--title", required=True)
     p_save.add_argument("--content-id", required=True)
     p_save.add_argument("--html-file")
+    p_save.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
 
     p_revise = sub.add_parser("revise-draft")
     p_revise.add_argument("--title", required=True)
     p_revise.add_argument("--html-file")
     p_revise.add_argument("--content-id", help="완전히 다른 주제로 바꾸는 경우에만 지정")
+    p_revise.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
 
     sub.add_parser("publish")
 

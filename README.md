@@ -45,11 +45,11 @@ python scripts/run_cycle.py check-replies
     ```
     아직 다루지 않은 관광지 1곳의 원본 데이터(주소/설명/이용시간/이미지 등)가 JSON으로 출력됩니다.
 
-  어느 쪽이든, 에이전트가 그 데이터를 바탕으로 외국인 여행자 관점의 글(제목 + HTML 본문: 실용 정보, 안전/실전 팁 포함)을 직접 작성한 뒤:
+  어느 쪽이든, 에이전트가 그 데이터를 바탕으로 외국인 여행자 관점의 글(제목 + HTML 본문: 실용 정보, 안전/실전 팁 포함)을 직접 작성한 뒤, **한글로 소주제(각 섹션이 뭘 다루는지) 요약을 한두 문단 따로 작성**해서(블로그 본문에는 넣지 않음, 텔레그램 확인용):
   ```
-  python scripts/run_cycle.py save-draft --title "..." --html-file draft.html --content-id <tip id 또는 contentId>
+  python scripts/run_cycle.py save-draft --title "..." --html-file draft.html --content-id <tip id 또는 contentId> --summary-ko-file summary_ko.txt
   ```
-  으로 텔레그램에 전송하고 승인을 기다립니다.
+  으로 텔레그램에 전송하고 승인을 기다립니다. (`revise-draft`도 동일하게 `--summary-ko-file` 지원)
 
 ## 콘텐츠 작성 원칙 (모든 글에 적용)
 
@@ -57,6 +57,7 @@ python scripts/run_cycle.py check-replies
   - TourAPI 데이터 기반 글(`fetch-next`/`search-topic`)이면 `fetch_attraction_bundle`이 주는 `images` 필드를 그대로 `<img>`로 삽입한다.
   - 팁 콘텐츠(`next-tip`)처럼 TourAPI 이미지가 없는 주제는 Wikimedia Commons에서 라이선스가 명확한(CC BY-SA, Public Domain 등) 사진을 찾아 쓴다. `https://commons.wikimedia.org/wiki/Special:FilePath/<파일명>?width=900` 형태 URL을 쓰면 리사이즈된 이미지를 바로 임베드할 수 있다. 사진마다 촬영자/라이선스명/링크를 캡션(`<small>`)으로 반드시 표기한다 — 예시는 이미 발행된 "Incheon Airport to Seoul" 글의 AREX·택시 사진 참고.
   - 본문 흐름과 관련 없는 아무 사진이나 넣지 말고, 각 섹션 내용과 실제로 맞는 사진을 그 섹션 바로 뒤에 넣는다.
+  - **소주제(각 `<h3>` 섹션)마다 최소 1장씩** 사진을 넣는다. 포스팅 전체에 사진 1~2장만 있는 건 부족하다 — 섹션이 4개면 사진도 최소 4장.
 - **글 난이도는 "한국에 처음 오는 사람" 기준으로 쉽게 쓴다.**
   - 짧은 문장, 쉬운 단어 위주. 전문용어·업계 용어는 피하고, 꼭 써야 하면 바로 옆에서 풀어서 설명한다.
   - 한국어 고유명사(지하철역명, 음식명 등)는 처음 나올 때 무엇인지 간단히 설명하고 쓴다.
