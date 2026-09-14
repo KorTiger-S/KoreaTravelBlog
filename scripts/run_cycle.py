@@ -14,12 +14,17 @@
           상세 조회한 뒤 새로 글을 써서 `revise-draft ... --content-id 새ID`로 교체
      - pending이 없는 상태에서 온 메시지(ignored_messages)도 주제 요청일 수 있음 → 위 b)와 동일하게 처리
      - 그 외 무응답이면 아무것도 안 해도 됨
-  2) pending도 없고 사용자의 특별한 주제 요청도 없다면 `fetch-next` 실행 → TourAPI 순회로 관광지 자동 선정
+  2) pending도 없고 사용자의 특별한 주제 요청도 없다면, 초반에는 여행 팁 콘텐츠를 우선한다:
+     a) `next-tip` 실행 → 아직 안 쓴 팁 주제가 있으면 {id, topic}이 나옴. 에이전트가 일반 지식(및
+        필요시 WelcomeToKorea/ 같은 기존 검증 자료)을 바탕으로 글을 쓴 뒤
+        `save-draft --content-id <tip id> ...`
+     b) 팁 주제가 소진됐으면("no_tips_left") `fetch-next` 실행 → TourAPI 순회로 관광지 자동 선정
   3) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성
   4) `save-draft`로 초안 저장 + 텔레그램 전송
 
 사용법:
   python run_cycle.py check-replies
+  python run_cycle.py next-tip
   python run_cycle.py fetch-next
   python run_cycle.py search-topic --keyword "Gyeongbokgung"
   python run_cycle.py fetch-detail --content-id 126508 --content-type-id 76
@@ -79,6 +84,15 @@ def cmd_check_replies(args):
             ensure_ascii=False,
         )
     )
+
+
+def cmd_next_tip(args):
+    posted_ids = state.load_posted_ids()
+    for tip in state.load_tips_backlog():
+        if tip["id"] not in posted_ids:
+            print(json.dumps({"status": "ok", "tip": tip}, ensure_ascii=False))
+            return
+    print(json.dumps({"status": "no_tips_left"}, ensure_ascii=False))
 
 
 def cmd_fetch_next(args):
@@ -188,6 +202,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("check-replies")
+    sub.add_parser("next-tip")
     sub.add_parser("fetch-next")
 
     p_search = sub.add_parser("search-topic")
@@ -212,6 +227,7 @@ def main():
     args = parser.parse_args()
     handlers = {
         "check-replies": cmd_check_replies,
+        "next-tip": cmd_next_tip,
         "fetch-next": cmd_fetch_next,
         "search-topic": cmd_search_topic,
         "fetch-detail": cmd_fetch_detail,

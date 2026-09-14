@@ -34,13 +34,20 @@ python scripts/run_cycle.py check-replies
     python scripts/run_cycle.py fetch-detail --content-id <ID> --content-type-id <TYPE>
     ```
     로 사용자가 원하는 곳의 실제 데이터를 가져온 뒤, 그 데이터로 글을 써서 `revise-draft ... --content-id <새ID>`로 대기 중인 초안을 교체합니다(대기 중인 초안이 없었다면 `save-draft`로 새로 만듭니다).
-- 대기 중인 초안이 없고 사용자의 주제 요청도 없으면(승인 완료 후):
+- 대기 중인 초안이 없고 사용자의 주제 요청도 없으면(승인 완료 후), **여행 팁 콘텐츠를 먼저 소진**합니다:
   ```
-  python scripts/run_cycle.py fetch-next
+  python scripts/run_cycle.py next-tip
   ```
-  아직 다루지 않은 관광지 1곳의 원본 데이터(주소/설명/이용시간/이미지 등)가 JSON으로 출력됩니다. 에이전트가 이 데이터를 바탕으로 외국인 여행자 관점의 글(제목 + HTML 본문: 실용 정보, 주소, 운영시간, 요금, 안전/실전 팁 포함)을 직접 작성한 뒤:
+  `state/tips_backlog.json`에서 아직 안 쓴 팁 주제(`{id, topic}`)가 나옵니다. TourAPI 장소 데이터가 아니라 일반 지식(및 필요하면 `WelcomeToKorea/` 같은 기존 검증 자료)을 바탕으로 에이전트가 직접 글을 씁니다.
+  - `"no_tips_left"`이면 팁 주제가 소진된 것이므로 TourAPI 관광지 로테이션으로 넘어갑니다:
+    ```
+    python scripts/run_cycle.py fetch-next
+    ```
+    아직 다루지 않은 관광지 1곳의 원본 데이터(주소/설명/이용시간/이미지 등)가 JSON으로 출력됩니다.
+
+  어느 쪽이든, 에이전트가 그 데이터를 바탕으로 외국인 여행자 관점의 글(제목 + HTML 본문: 실용 정보, 안전/실전 팁 포함)을 직접 작성한 뒤:
   ```
-  python scripts/run_cycle.py save-draft --title "..." --html-file draft.html --content-id <contentId>
+  python scripts/run_cycle.py save-draft --title "..." --html-file draft.html --content-id <tip id 또는 contentId>
   ```
   으로 텔레그램에 전송하고 승인을 기다립니다.
 
@@ -61,9 +68,10 @@ python scripts/run_cycle.py check-replies
 
 ## 상태 파일 (`state/`)
 
-- `posted.json` — 이미 발행한 TourAPI contentId 목록 (중복 발행 방지)
+- `posted.json` — 이미 발행한 콘텐츠 id 목록 (TourAPI contentId 또는 팁 id, 중복 발행 방지)
 - `pending_draft.json` — 승인 대기 중인 초안 (없으면 `null`)
 - `telegram_offset.json` — 마지막으로 처리한 텔레그램 update_id
-- `crawl_cursor.json` — 다음에 조회할 지역/페이지 커서
+- `crawl_cursor.json` — 다음에 조회할 지역/페이지 커서 (TourAPI 로테이션용)
+- `tips_backlog.json` — 우선 발행할 여행 팁 주제 목록 (직접 편집해서 추가/삭제 가능)
 
 이 파일들은 클라우드 루틴 실행 사이에 상태를 이어가기 위해 git에 커밋됩니다.

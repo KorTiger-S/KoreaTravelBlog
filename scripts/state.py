@@ -9,6 +9,7 @@ POSTED_PATH = os.path.join(STATE_DIR, "posted.json")
 PENDING_DRAFT_PATH = os.path.join(STATE_DIR, "pending_draft.json")
 TELEGRAM_OFFSET_PATH = os.path.join(STATE_DIR, "telegram_offset.json")
 CRAWL_CURSOR_PATH = os.path.join(STATE_DIR, "crawl_cursor.json")
+TIPS_BACKLOG_PATH = os.path.join(STATE_DIR, "tips_backlog.json")
 
 
 def load_json(path, default):
@@ -67,3 +68,8 @@ def load_crawl_cursor():
 
 def save_crawl_cursor(cursor):
     save_json(CRAWL_CURSOR_PATH, cursor)
+
+
+def load_tips_backlog():
+    data = load_json(TIPS_BACKLOG_PATH, {"tips": []})
+    return data.get("tips", [])
