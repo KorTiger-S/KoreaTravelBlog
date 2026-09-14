@@ -51,6 +51,17 @@ python scripts/run_cycle.py check-replies
   ```
   으로 텔레그램에 전송하고 승인을 기다립니다.
 
+## 콘텐츠 작성 원칙 (모든 글에 적용)
+
+- **사진을 반드시 넣는다.** 글만 있는 포스팅은 만들지 않는다.
+  - TourAPI 데이터 기반 글(`fetch-next`/`search-topic`)이면 `fetch_attraction_bundle`이 주는 `images` 필드를 그대로 `<img>`로 삽입한다.
+  - 팁 콘텐츠(`next-tip`)처럼 TourAPI 이미지가 없는 주제는 Wikimedia Commons에서 라이선스가 명확한(CC BY-SA, Public Domain 등) 사진을 찾아 쓴다. `https://commons.wikimedia.org/wiki/Special:FilePath/<파일명>?width=900` 형태 URL을 쓰면 리사이즈된 이미지를 바로 임베드할 수 있다. 사진마다 촬영자/라이선스명/링크를 캡션(`<small>`)으로 반드시 표기한다 — 예시는 이미 발행된 "Incheon Airport to Seoul" 글의 AREX·택시 사진 참고.
+  - 본문 흐름과 관련 없는 아무 사진이나 넣지 말고, 각 섹션 내용과 실제로 맞는 사진을 그 섹션 바로 뒤에 넣는다.
+- **글 난이도는 "한국에 처음 오는 사람" 기준으로 쉽게 쓴다.**
+  - 짧은 문장, 쉬운 단어 위주. 전문용어·업계 용어는 피하고, 꼭 써야 하면 바로 옆에서 풀어서 설명한다.
+  - 한국어 고유명사(지하철역명, 음식명 등)는 처음 나올 때 무엇인지 간단히 설명하고 쓴다.
+  - 독자가 이미 한국을 잘 안다고 가정하지 않는다 — "당연히 알겠지" 하고 생략하는 정보가 없는지 스스로 점검한다.
+
 ## 로컬 테스트 (엔드투엔드)
 
 1. `python scripts/tourapi_client.py` — TourAPI 키가 유효하고 목록이 오는지 확인
