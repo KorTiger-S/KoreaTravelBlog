@@ -1,0 +1,69 @@
+"""state/ 디렉터리의 JSON 파일을 읽고 쓰는 헬퍼."""
+import json
+import os
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATE_DIR = os.path.join(ROOT_DIR, "state")
+
+POSTED_PATH = os.path.join(STATE_DIR, "posted.json")
+PENDING_DRAFT_PATH = os.path.join(STATE_DIR, "pending_draft.json")
+TELEGRAM_OFFSET_PATH = os.path.join(STATE_DIR, "telegram_offset.json")
+CRAWL_CURSOR_PATH = os.path.join(STATE_DIR, "crawl_cursor.json")
+
+
+def load_json(path, default):
+    if not os.path.exists(path):
+        return default
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+        if not content:
+            return default
+        return json.loads(content)
+
+
+def save_json(path, data):
+    os.makedirs(STATE_DIR, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def load_posted_ids():
+    data = load_json(POSTED_PATH, {"content_ids": []})
+    return set(data.get("content_ids", []))
+
+
+def add_posted_id(content_id):
+    data = load_json(POSTED_PATH, {"content_ids": []})
+    ids = data.get("content_ids", [])
+    if content_id not in ids:
+        ids.append(content_id)
+    save_json(POSTED_PATH, {"content_ids": ids})
+
+
+def load_pending_draft():
+    return load_json(PENDING_DRAFT_PATH, None)
+
+
+def save_pending_draft(draft):
+    save_json(PENDING_DRAFT_PATH, draft)
+
+
+def clear_pending_draft():
+    save_json(PENDING_DRAFT_PATH, None)
+
+
+def load_telegram_offset():
+    data = load_json(TELEGRAM_OFFSET_PATH, {"offset": 0})
+    return data.get("offset", 0)
+
+
+def save_telegram_offset(offset):
+    save_json(TELEGRAM_OFFSET_PATH, {"offset": offset})
+
+
+def load_crawl_cursor():
+    return load_json(CRAWL_CURSOR_PATH, {"area_index": 0, "page_no": 1})
+
+
+def save_crawl_cursor(cursor):
+    save_json(CRAWL_CURSOR_PATH, cursor)
