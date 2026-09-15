@@ -46,11 +46,13 @@ def _get_service():
     return build("blogger", "v3", credentials=_load_credentials())
 
 
-def publish_post(title, html_content, is_draft=False):
+def publish_post(title, html_content, is_draft=False, search_description=None):
     if not BLOGGER_BLOG_ID:
         raise RuntimeError("BLOGGER_BLOG_ID가 설정되어 있지 않습니다 (.env 확인)")
     service = _get_service()
     body = {"title": title, "content": html_content}
+    if search_description:
+        body["searchDescription"] = search_description
     result = (
         service.posts()
         .insert(blogId=BLOGGER_BLOG_ID, body=body, isDraft=is_draft)
@@ -64,17 +66,21 @@ def get_post(post_id):
     return service.posts().get(blogId=BLOGGER_BLOG_ID, postId=post_id).execute()
 
 
-def update_post(post_id, title=None, html_content=None):
+def update_post(post_id, title=None, html_content=None, search_description=None):
     """발행된 글을 수정한다 (사진 추가, 오타 수정 등).
 
     Blogger의 posts().update()는 전체 교체(PUT) 방식이라, title을 안 보내면
-    제목이 빈 값으로 덮어써진다. 그래서 title/html_content 중 지정 안 한 값은
-    반드시 현재 값을 먼저 읽어와 채운 뒤 보낸다 — 절대로 content만 달랑 보내지 말 것."""
+    제목이 빈 값으로 덮어써진다. 그래서 title/html_content/searchDescription 중
+    지정 안 한 값은 반드시 현재 값을 먼저 읽어와 채운 뒤 보낸다 — 절대로 content만
+    달랑 보내지 말 것."""
     service = _get_service()
     current = service.posts().get(blogId=BLOGGER_BLOG_ID, postId=post_id).execute()
     body = {
         "title": title if title is not None else current.get("title", ""),
         "content": html_content if html_content is not None else current.get("content", ""),
+        "searchDescription": (
+            search_description if search_description is not None else current.get("searchDescription", "")
+        ),
     }
     return service.posts().update(blogId=BLOGGER_BLOG_ID, postId=post_id, body=body).execute()
 

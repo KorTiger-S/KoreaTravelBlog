@@ -51,7 +51,9 @@
   6) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
   7) 검색결과에 뜨는 요약(meta description)도 영문 150~160자 내외로 하나 작성 (SEO용, 본문에는 안 들어감)
   8) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..."`로 초안 저장 + 텔레그램 전송
-     (한글 요약과 meta description 모두 블로그 본문에는 안 들어감 — 한글 요약은 텔레그램 미리보기용, meta description은 Blogger의 searchDescription으로 저장됨)
+     (한글 요약과 meta description 모두 블로그 본문에는 안 들어감 — 한글 요약은 텔레그램 미리보기용.
+     meta description은 Blogger API의 searchDescription 저장 버그 때문에 자동 반영이 안 되므로,
+     발행 완료 시 텔레그램 메시지에 URL과 함께 다시 안내되고 사용자가 Blogger 편집 화면에서 직접 입력함)
 
 사용법:
   python run_cycle.py check-replies
@@ -114,7 +116,7 @@ def cmd_check_replies(args):
         )
         state.add_posted_id(pending["content_id"])
         state.clear_pending_draft()
-        telegram_client.send_message(f"발행 완료: {result.get('url')}")
+        telegram_client.send_message(_published_message(result, pending.get("meta_description")))
         print(json.dumps({"status": "published", "url": result.get("url")}, ensure_ascii=False))
         return
 
@@ -289,6 +291,15 @@ def _reviewer_note_block(args):
     return f"\n\n💡 참고: {note}" if note else ""
 
 
+def _published_message(result, meta_description):
+    """Blogger의 searchDescription 필드가 API로는 저장이 안 되는 문제(확인됨, 2026-09-15)가 있어,
+    검색 설명은 자동 반영을 시도하되 사용자가 Blogger 글 편집 화면에서 직접 입력하도록 텔레그램에 안내한다."""
+    message = f"발행 완료: {result.get('url')}"
+    if meta_description:
+        message += f"\n\n📋 검색 설명(Search Description)을 Blogger 글 편집 화면에서 직접 입력해주세요:\n{meta_description}"
+    return message
+
+
 def cmd_save_draft(args):
     html = _read_html(args)
     summary_ko = _read_summary_ko(args)
@@ -346,7 +357,7 @@ def cmd_publish(args):
     )
     state.add_posted_id(pending["content_id"])
     state.clear_pending_draft()
-    telegram_client.send_message(f"발행 완료: {result.get('url')}")
+    telegram_client.send_message(_published_message(result, pending.get("meta_description")))
     print(json.dumps({"status": "published", "url": result.get("url")}, ensure_ascii=False))
 
 
