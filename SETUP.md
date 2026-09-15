@@ -22,7 +22,7 @@
 1. https://console.cloud.google.com 접속 → 새 프로젝트 생성 (예: `korea-travel-blog`)
 2. 좌측 메뉴 "API 및 서비스" → "라이브러리" → "Blogger API v3" 검색 → 사용 설정
 3. "API 및 서비스" → "OAuth 동의 화면" → User type: **외부(External)** 선택 → 앱 이름/이메일 등 최소 정보 입력 → 저장
-   - 테스트 사용자로 본인 Google 계정 이메일(REDACTED)을 추가해둘 것 (앱이 "게시" 상태가 아니어도 테스트 사용자는 계속 사용 가능)
+   - 테스트 사용자로 본인 Google 계정 이메일(예: `your-email@gmail.com`)을 추가해둘 것 (앱이 "게시" 상태가 아니어도 테스트 사용자는 계속 사용 가능)
 4. "API 및 서비스" → "사용자 인증 정보" → "사용자 인증 정보 만들기" → "OAuth 클라이언트 ID"
    - 애플리케이션 유형: **데스크톱 앱**
    - 생성 후 JSON 다운로드 → 파일명을 `credentials.json`으로 바꿔 프로젝트 루트(`KoreaTravelBlog/`)에 저장
