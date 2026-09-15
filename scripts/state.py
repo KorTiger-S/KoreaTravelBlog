@@ -34,10 +34,17 @@ def load_posted_ids():
 
 
 def add_posted_id(content_id):
+    """content_id에 콤마(,)가 있으면 여러 개를 한 번에 기록한다.
+    (예: 여러 축제를 한 글로 묶은 로스터 포스팅 발행 시 각 축제 id를 모두 기록)"""
     data = load_json(POSTED_PATH, {"content_ids": []})
     ids = data.get("content_ids", [])
-    if content_id not in ids:
-        ids.append(content_id)
+    if isinstance(content_id, str) and "," in content_id:
+        new_ids = [c.strip() for c in content_id.split(",") if c.strip()]
+    else:
+        new_ids = [content_id]
+    for nid in new_ids:
+        if nid not in ids:
+            ids.append(nid)
     save_json(POSTED_PATH, {"content_ids": ids})
 
 

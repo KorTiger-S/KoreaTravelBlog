@@ -6,6 +6,7 @@
 """
 import os
 import sys
+from datetime import date
 
 import requests
 from dotenv import load_dotenv
@@ -157,6 +158,82 @@ EXCLUDED_CAT3 = {"A02020500"}  # Medical Tourism Sites
 
 def _is_relevant_attraction(item):
     return item.get("cat1") in ALLOWED_CAT1 and item.get("cat3") not in EXCLUDED_CAT3
+
+
+# 외국인 여행자가 대중교통으로 당일/1박 접근하기 쉬운 수도권(서울·인천·경기)만 다룬다.
+# EngService2의 areacode/sigungucode는 항상 빈 값이라, lDongRegnCd(행정구역 코드)로 걸러야 한다.
+CAPITAL_AREA_REGION_CODES = {"11", "28", "41"}  # 11=서울, 28=인천, 41=경기
+SEOUL_REGION_CODE = "11"
+# lclsSystm2 == "EV01"은 진짜 축제/전통행사 (search_festivals, 월말 트리거).
+# EV02/EV03(전시·공연·행사 등)은 한강·서울숲·광화문 같은 핫플레이스 "행사"로 따로 다룬다
+# (search_hotspot_events, 격주 월요일 트리거). 단 "몇 달짜리 상설 프로그램"(APAP 작품투어처럼
+# 연중 내내 여는 전시투어)까지 섞이므로, 기간이 이 값(일) 이하인 것만 "행사"로 인정한다.
+MAX_EVENT_DURATION_DAYS = 60
+
+
+def _event_duration_days(item):
+    try:
+        start = date(*map(int, [item["eventstartdate"][:4], item["eventstartdate"][4:6], item["eventstartdate"][6:8]]))
+        end = date(*map(int, [item["eventenddate"][:4], item["eventenddate"][4:6], item["eventenddate"][6:8]]))
+        return (end - start).days
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def _search_festival_api(event_start_date, event_end_date, num_of_rows):
+    body = _get(
+        "searchFestival2",
+        eventStartDate=event_start_date,
+        eventEndDate=event_end_date,
+        numOfRows=num_of_rows,
+        pageNo=1,
+        arrange="A",
+    )
+    items = body.get("items", {})
+    item_list = items.get("item", []) if items else []
+    if isinstance(item_list, dict):
+        item_list = [item_list]
+    return item_list
+
+
+def _filter_capital_area_seoul_first(item_list, predicate):
+    filtered = [it for it in item_list if it.get("lDongRegnCd") in CAPITAL_AREA_REGION_CODES and predicate(it)]
+    filtered.sort(
+        key=lambda it: (
+            it.get("lDongRegnCd") != SEOUL_REGION_CODE,
+            it.get("eventstartdate") or "",
+        )
+    )
+    return filtered
+
+
+def search_festivals(event_start_date, event_end_date, num_of_rows=100):
+    """지정 기간(YYYYMMDD)과 겹치는 수도권 "대형 축제" 조회 (월말 다음 달 축제 로스터용).
+
+    lclsSystm2 == "EV01"(진짜 축제/전통행사)만 포함한다. 한강·서울숲·광화문 같은 핫플레이스의
+    전시/공연 등 자잘한 "행사"는 search_hotspot_events()가 별도로 담당한다.
+    외국인 접근성을 위해 수도권(CAPITAL_AREA_REGION_CODES) 밖은 제외하고,
+    서울(SEOUL_REGION_CODE) 항목이 먼저 오도록 정렬해서 반환한다."""
+    item_list = _search_festival_api(event_start_date, event_end_date, num_of_rows)
+    return _filter_capital_area_seoul_first(item_list, lambda it: it.get("lclsSystm2") == "EV01")
+
+
+def search_hotspot_events(event_start_date, event_end_date, num_of_rows=100):
+    """지정 기간(YYYYMMDD)과 겹치는 수도권 "행사"(격주 월요일 로스터용) 조회.
+
+    lclsSystm2 == "EV02"/"EV03"(전시·공연·팝업 등, 대형 축제로 분류 안 된 것) 중
+    기간이 MAX_EVENT_DURATION_DAYS 이하인 것만 포함해 "연중 상설 프로그램" 노이즈를 걸러낸다.
+    외국인 접근성을 위해 수도권(CAPITAL_AREA_REGION_CODES) 밖은 제외하고,
+    서울(SEOUL_REGION_CODE) 항목이 먼저 오도록 정렬해서 반환한다."""
+    item_list = _search_festival_api(event_start_date, event_end_date, num_of_rows)
+
+    def _is_relevant_event(it):
+        if it.get("lclsSystm2") not in ("EV02", "EV03"):
+            return False
+        duration = _event_duration_days(it)
+        return duration is not None and duration <= MAX_EVENT_DURATION_DAYS
+
+    return _filter_capital_area_seoul_first(item_list, _is_relevant_event)
 
 
 def find_next_unposted(posted_ids):

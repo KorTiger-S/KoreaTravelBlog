@@ -34,7 +34,33 @@ python scripts/run_cycle.py check-replies
     python scripts/run_cycle.py fetch-detail --content-id <ID> --content-type-id <TYPE>
     ```
     로 사용자가 원하는 곳의 실제 데이터를 가져온 뒤, 그 데이터로 글을 써서 `revise-draft ... --content-id <새ID>`로 대기 중인 초안을 교체합니다(대기 중인 초안이 없었다면 `save-draft`로 새로 만듭니다).
-- 대기 중인 초안이 없고 사용자의 주제 요청도 없으면(승인 완료 후), **여행 팁 콘텐츠를 먼저 소진**합니다:
+- 대기 중인 초안이 없고 사용자의 주제 요청도 없으면(승인 완료 후), **이번 달 마지막 3일인지부터 확인**합니다:
+  ```
+  python scripts/run_cycle.py fetch-monthly-festivals
+  ```
+  - `"not_due"`(평소) 또는 `"no_new_festivals"`(이미 다 다룸)면 아래 여행 팁 우선 순서로 넘어갑니다.
+  - `"ok"`면 다음 달에 열리는 **"대형 축제"**(`lclsSystm2 == "EV01"`) 목록(제목/날짜/주소)이 나옵니다.
+    **외국인 여행자가 대중교통으로 접근하기 쉬운 수도권(서울·인천·경기)만, 서울이 먼저 오도록 정렬되어**
+    나옵니다(`tourapi_client.search_festivals`의 `CAPITAL_AREA_REGION_CODES` 필터 + `SEOUL_REGION_CODE`
+    우선 정렬). 한강·서울숲·광화문 같은 핫플레이스의 전시/공연/팝업 같은 자잘한 "행사"는 여기 안 나오고
+    아래 격주 행사 로스터가 따로 다룹니다. 그중 겹치는 테마(단풍축제, 빛축제 등)가 있으면 그 테마만
+    묶어 1개 글로, 없거나 이미 썼으면 남은 것 중 추천순 최대 10개로 "이번 달 축제 Top N" 글을
+    작성합니다(목록이 이미 서울 우선으로 정렬되어 있으므로 그 순서를 그대로 따르면 됨).
+    각 축제는 `fetch-detail --content-id ID --content-type-id 85`로 상세를 가져오고,
+    `save-draft --content-id "id1,id2,..."`처럼 콤마로 여러 id를 한 번에 넘기면 승인 후 전부 발행 기록에 남아
+    다음 트리거 때 중복되지 않습니다. 테마 글은 위치를 표시한 지도 이미지가 있으면 좋으므로
+    `--reviewer-note "..."`로 텔레그램에 이미지 추가를 요청하세요 (아래 콘텐츠 작성 원칙 참고).
+- 월말 축제 로스터도 해당 없으면, **격주 월요일인지 확인**합니다:
+  ```
+  python scripts/run_cycle.py fetch-biweekly-events
+  ```
+  - `"not_due"`(격주 월요일이 아님) 또는 `"no_new_events"`(이번 주기 새 행사 없음)면 아래 여행 팁 우선 순서로 넘어갑니다.
+  - `"ok"`면 앞으로 3주 안에 열리는 수도권 **"행사"**(`lclsSystm2 == "EV02"`/`"EV03"` 중 기간
+    `MAX_EVENT_DURATION_DAYS`(60일) 이하 — 연중 상설 프로그램 제외) 목록이 서울 우선으로 정렬되어 나옵니다.
+    한강·서울숲·광화문처럼 핫플레이스에서 열리거나, **K-pop 관련처럼 외국인 관광객이 특히 좋아할 만한
+    소재는 우선적으로 고려**해서 최대 5~6개를 골라 "지금 서울에서 놓치기 아까운 행사" 같은 로스터 글로
+    작성합니다. 이미지·콤마 다중 id·`posted_ids` 공유 방식은 위 월말 축제 로스터와 동일합니다.
+- 격주 행사 로스터도 해당 없으면, **여행 팁 콘텐츠를 먼저 소진**합니다:
   ```
   python scripts/run_cycle.py next-tip
   ```
@@ -69,12 +95,14 @@ python scripts/run_cycle.py check-replies
 - **주제에 자연스럽게 맞으면, "실제 한국인들은 어떻게 하는지" 팁을 넣는다.** 이동수단/결제/음식/에티켓처럼 현지인의 실제 선택이 있는 주제면, 관광객용 정보만 나열하지 말고 "현지인들도 보통 이렇게 한다/이걸 선호한다" 같은 인사이트를 한 문장이라도 곁들인다. K-ETA나 비자 요건처럼 "현지인의 선택"이 애초에 성립하지 않는 주제엔 억지로 넣지 않는다.
 - **비교형 주제는 글 마지막에 비교표를 넣는다.** 지하철 vs 버스 vs 택시 vs 공항철도, 교통카드 종류, 유심/eSIM 요금제처럼 여러 선택지를 비교하는 글이면, 섹션별 설명을 다 쓴 뒤 글 마지막 쪽에 가격/소요시간/편의성/추천 대상 등을 정리한 비교표(`<table>`)를 추가한다. 단일 장소/규정 소개 글처럼 비교 대상이 없는 주제는 표를 억지로 넣지 않는다.
 - **중요 키워드는 글자색을 입혀 강조한다.** 가격, 시간, 역/노선명, 앱/카드 이름처럼 독자가 빠르게 훑어볼 때 눈에 띄어야 하는 핵심 단어는 `<span style="color:#C0392B;font-weight:600;">` 같은 식으로 색을 입힌다. 문단마다 남발하지 말고 섹션당 꼭 짚어야 할 키워드 1~3개 정도로 제한한다 (색이 너무 많으면 오히려 안 읽힘).
+- **검색결과 요약(meta description)을 영문 150~160자 내외로 작성한다.** 본문과는 별개로, 글의 핵심을 요약한 문장을 하나 써서 `save-draft`/`revise-draft`의 `--meta-description`으로 넘긴다. 이 값은 Blogger의 `searchDescription`(구글 검색결과에 뜨는 설명문)으로 저장되며 블로그 본문에는 노출되지 않는다.
+- **테마로 묶은 수도권 축제 로스터 글은 지도 이미지 추가를 사용자에게 요청한다.** 이 파이프라인엔 이미지 생성 API가 없으므로, 여러 수도권 축제가 겹치는 테마(단풍축제 등)를 묶은 글을 저장할 때 `save-draft`/`revise-draft`의 `--reviewer-note`에 "이 글에 넣을 축제 위치 지도 이미지를 AI로 생성해서 추가해주시면 반영해서 다시 보내드릴게요." 같은 안내를 넣는다. 이 문구는 텔레그램 메시지에만 붙고 블로그 본문에는 안 들어간다. 사용자가 이미지 URL로 답장하면 다음 `check-replies`의 피드백으로 들어오므로, 그 URL을 본문에 `<img>`로 넣어 `revise-draft`로 반영한다.
 
 ## 이미 발행된 글 수정하기 (사진 추가, 오타 수정 등)
 
-**`scripts/blogger_client.py`의 `update_post(post_id, title=None, html_content=None)`를 쓴다. `service.posts().update()`를 직접 호출하지 않는다.**
+**`scripts/blogger_client.py`의 `update_post(post_id, title=None, html_content=None, search_description=None)`를 쓴다. `service.posts().update()`를 직접 호출하지 않는다.**
 
-Blogger의 `posts().update()`는 부분 수정(PATCH)이 아니라 전체 교체(PUT) 방식이라, body에 `title`을 안 넣으면 제목이 빈 값으로 지워진다. `update_post()`는 title/html_content 중 안 넘긴 값을 현재 값으로 자동으로 채워서 보내기 때문에 이 문제가 안 생긴다. (2026-09-14, 사진/마무리 문구를 넣으려고 `content`만 보내는 스크립트를 여러 번 돌렸다가 발행된 글 2개의 제목이 전부 빈 값으로 지워진 사고가 있었음 — 그 이후로 이 헬퍼가 생김.)
+Blogger의 `posts().update()`는 부분 수정(PATCH)이 아니라 전체 교체(PUT) 방식이라, body에 `title`을 안 넣으면 제목이 빈 값으로 지워진다. `update_post()`는 title/html_content/search_description 중 안 넘긴 값을 현재 값으로 자동으로 채워서 보내기 때문에 이 문제가 안 생긴다. (2026-09-14, 사진/마무리 문구를 넣으려고 `content`만 보내는 스크립트를 여러 번 돌렸다가 발행된 글 2개의 제목이 전부 빈 값으로 지워진 사고가 있었음 — 그 이후로 이 헬퍼가 생김.)
 
 ## 로컬 테스트 (엔드투엔드)
 
@@ -93,7 +121,7 @@ Blogger의 `posts().update()`는 부분 수정(PATCH)이 아니라 전체 교체
 
 ## 상태 파일 (`state/`)
 
-- `posted.json` — 이미 발행한 콘텐츠 id 목록 (TourAPI contentId 또는 팁 id, 중복 발행 방지)
+- `posted.json` — 이미 발행한 콘텐츠 id 목록 (TourAPI contentId 또는 팁 id, 중복 발행 방지). 축제 로스터처럼 한 글에 여러 id가 묶인 경우 `save-draft --content-id "id1,id2,..."`로 저장하면 개별 id가 각각 기록된다.
 - `pending_draft.json` — 승인 대기 중인 초안 (없으면 `null`)
 - `telegram_offset.json` — 마지막으로 처리한 텔레그램 update_id
 - `crawl_cursor.json` — 다음에 조회할 지역/페이지 커서 (TourAPI 로테이션용)
