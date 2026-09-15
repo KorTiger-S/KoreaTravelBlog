@@ -68,6 +68,12 @@ python scripts/run_cycle.py check-replies
 - **글 마지막엔 항상 댓글 유도 문구를 이모지와 함께 넣는다.** 예: `<p>💬 Got a question about this? Drop it in the comments below — happy to help!</p>`. 매번 문구를 그대로 복붙하지 말고 그 글 주제에 맞게 살짝 바꿔서 쓴다 (톤/이모지는 유지).
 - **주제에 자연스럽게 맞으면, "실제 한국인들은 어떻게 하는지" 팁을 넣는다.** 이동수단/결제/음식/에티켓처럼 현지인의 실제 선택이 있는 주제면, 관광객용 정보만 나열하지 말고 "현지인들도 보통 이렇게 한다/이걸 선호한다" 같은 인사이트를 한 문장이라도 곁들인다. K-ETA나 비자 요건처럼 "현지인의 선택"이 애초에 성립하지 않는 주제엔 억지로 넣지 않는다.
 
+## 이미 발행된 글 수정하기 (사진 추가, 오타 수정 등)
+
+**`scripts/blogger_client.py`의 `update_post(post_id, title=None, html_content=None)`를 쓴다. `service.posts().update()`를 직접 호출하지 않는다.**
+
+Blogger의 `posts().update()`는 부분 수정(PATCH)이 아니라 전체 교체(PUT) 방식이라, body에 `title`을 안 넣으면 제목이 빈 값으로 지워진다. `update_post()`는 title/html_content 중 안 넘긴 값을 현재 값으로 자동으로 채워서 보내기 때문에 이 문제가 안 생긴다. (2026-09-14, 사진/마무리 문구를 넣으려고 `content`만 보내는 스크립트를 여러 번 돌렸다가 발행된 글 2개의 제목이 전부 빈 값으로 지워진 사고가 있었음 — 그 이후로 이 헬퍼가 생김.)
+
 ## 로컬 테스트 (엔드투엔드)
 
 1. `python scripts/tourapi_client.py` — TourAPI 키가 유효하고 목록이 오는지 확인
