@@ -50,10 +50,16 @@
      소주제마다 사진 1장 이상, 한국 초행자 기준 쉬운 문장, 3년 이상 지난 정보/사진은 재검증)
   6) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
   7) 검색결과에 뜨는 요약(meta description)도 영문 150~160자 내외로 하나 작성 (SEO용, 본문에는 안 들어감)
-  8) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..."`로 초안 저장 + 텔레그램 전송
+  8) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..." --labels "..."`로
+     초안 저장 + 텔레그램 전송
      (한글 요약과 meta description 모두 블로그 본문에는 안 들어감 — 한글 요약은 텔레그램 미리보기용.
      meta description은 Blogger API의 searchDescription 저장 버그 때문에 자동 반영이 안 되므로,
-     발행 완료 시 텔레그램 메시지에 URL과 함께 다시 안내되고 사용자가 Blogger 편집 화면에서 직접 입력함)
+     발행 완료 시 텔레그램 메시지에 URL과 함께 다시 안내되고 사용자가 Blogger 편집 화면에서 직접 입력함.
+     labels는 Blogger 라벨(왼쪽 메뉴 카테고리 가젯에 쓰임)로 실제 발행에 반영됨 — 콤마로 여러 개 지정
+     가능. 블로그 본문/독자가 영어권이므로 라벨도 영어로 짓는다. 글감을 가져온 단계에 맞춰 하나 이상
+     고른다: fetch-monthly-festivals/fetch-biweekly-events → "Festivals & Events", next-tip →
+     "Travel Tips"(+ 세부 주제, 예: "Money", "Transportation", "Connectivity"), fetch-next →
+     관광지 성격에 맞게 "Attractions"/"Food"/"Accommodation" 등)
 
 사용법:
   python run_cycle.py check-replies
@@ -63,9 +69,11 @@
   python run_cycle.py fetch-next
   python run_cycle.py search-topic --keyword "Gyeongbokgung"
   python run_cycle.py fetch-detail --content-id 126508 --content-type-id 76
-  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508 --summary-ko-file summary_ko.txt --meta-description "..." [--reviewer-note "..."]
-  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID] --summary-ko-file summary_ko.txt --meta-description "..." [--reviewer-note "..."]
+  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508 --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."]
+  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID] --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."]
   python run_cycle.py publish
+  python run_cycle.py list-posts
+  python run_cycle.py set-labels --post-id 123456789 --labels "Travel Tips,Transportation"
 """
 import argparse
 import calendar
@@ -113,6 +121,7 @@ def cmd_check_replies(args):
             pending["html"],
             is_draft=False,
             search_description=pending.get("meta_description"),
+            labels=pending.get("labels"),
         )
         state.add_posted_id(pending["content_id"])
         state.clear_pending_draft()
@@ -267,6 +276,12 @@ def _read_html(args):
     return sys.stdin.read()
 
 
+def _parse_labels(labels_arg):
+    if not labels_arg:
+        return []
+    return [label.strip() for label in labels_arg.split(",") if label.strip()]
+
+
 def _read_summary_ko(args):
     if not args.summary_ko_file:
         return ""
@@ -308,6 +323,7 @@ def cmd_save_draft(args):
         "title": args.title,
         "html": html,
         "meta_description": args.meta_description,
+        "labels": _parse_labels(args.labels),
         "status": "awaiting_approval",
     }
     state.save_pending_draft(draft)
@@ -331,6 +347,8 @@ def cmd_revise_draft(args):
     pending["html"] = html
     if args.meta_description:
         pending["meta_description"] = args.meta_description
+    if args.labels:
+        pending["labels"] = _parse_labels(args.labels)
     if args.content_id:
         # 같은 글을 다듬는 게 아니라 사용자가 완전히 다른 주제로 바꿔달라고 한 경우
         pending["content_id"] = args.content_id
@@ -354,11 +372,27 @@ def cmd_publish(args):
         pending["html"],
         is_draft=False,
         search_description=pending.get("meta_description"),
+        labels=pending.get("labels"),
     )
     state.add_posted_id(pending["content_id"])
     state.clear_pending_draft()
     telegram_client.send_message(_published_message(result, pending.get("meta_description")))
     print(json.dumps({"status": "published", "url": result.get("url")}, ensure_ascii=False))
+
+
+def cmd_list_posts(args):
+    """기존에 발행된 글에 라벨을 소급 적용(백필)할 때, 먼저 이 명령으로 전체 글의
+    id/제목/현재 라벨을 확인한 뒤 글마다 알맞은 라벨을 판단해 set-labels로 적용한다."""
+    posts = blogger_client.list_posts()
+    print(json.dumps({"status": "ok", "posts": posts}, ensure_ascii=False))
+
+
+def cmd_set_labels(args):
+    """발행된 글 하나에 라벨을 설정한다 (제목/본문/searchDescription은 그대로 유지).
+    콤마로 여러 라벨 지정 가능. 기존 글 라벨 백필용."""
+    labels = _parse_labels(args.labels)
+    result = blogger_client.update_post(args.post_id, labels=labels)
+    print(json.dumps({"status": "ok", "post_id": args.post_id, "labels": result.get("labels", [])}, ensure_ascii=False))
 
 
 def main():
@@ -384,6 +418,7 @@ def main():
     p_save.add_argument("--html-file")
     p_save.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
     p_save.add_argument("--meta-description", help="검색결과 요약(searchDescription)용 영문 150~160자 내외 문구")
+    p_save.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 왼쪽 메뉴 카테고리 가젯에 쓰임")
     p_save.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
 
     p_revise = sub.add_parser("revise-draft")
@@ -392,9 +427,16 @@ def main():
     p_revise.add_argument("--content-id", help="완전히 다른 주제로 바꾸는 경우에만 지정 (콤마로 여러 id 지정 가능 — 여러 글감을 한 포스팅으로 묶을 때)")
     p_revise.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
     p_revise.add_argument("--meta-description", help="검색결과 요약(searchDescription)용 영문 150~160자 내외 문구")
+    p_revise.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 생략하면 기존 라벨 유지")
     p_revise.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
 
     sub.add_parser("publish")
+
+    sub.add_parser("list-posts")
+
+    p_labels = sub.add_parser("set-labels")
+    p_labels.add_argument("--post-id", required=True)
+    p_labels.add_argument("--labels", required=True, help="콤마 구분 라벨 목록, 영문으로. 예: 'Travel Tips,Transportation'")
 
     args = parser.parse_args()
     handlers = {
@@ -408,6 +450,8 @@ def main():
         "save-draft": cmd_save_draft,
         "revise-draft": cmd_revise_draft,
         "publish": cmd_publish,
+        "list-posts": cmd_list_posts,
+        "set-labels": cmd_set_labels,
     }
     handlers[args.command](args)
 

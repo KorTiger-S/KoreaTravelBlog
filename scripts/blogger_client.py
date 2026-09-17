@@ -46,13 +46,15 @@ def _get_service():
     return build("blogger", "v3", credentials=_load_credentials())
 
 
-def publish_post(title, html_content, is_draft=False, search_description=None):
+def publish_post(title, html_content, is_draft=False, search_description=None, labels=None):
     if not BLOGGER_BLOG_ID:
         raise RuntimeError("BLOGGER_BLOG_ID가 설정되어 있지 않습니다 (.env 확인)")
     service = _get_service()
     body = {"title": title, "content": html_content}
     if search_description:
         body["searchDescription"] = search_description
+    if labels:
+        body["labels"] = labels
     result = (
         service.posts()
         .insert(blogId=BLOGGER_BLOG_ID, body=body, isDraft=is_draft)
@@ -66,11 +68,33 @@ def get_post(post_id):
     return service.posts().get(blogId=BLOGGER_BLOG_ID, postId=post_id).execute()
 
 
-def update_post(post_id, title=None, html_content=None, search_description=None):
+def list_posts():
+    """이미 발행된(live) 글 전체를 최신순으로 나열한다. 본문(content)은 라벨 판단에
+    필요 없고 응답만 무거워지므로 fetchBodies=False로 제외한다.
+    기존 글에 라벨을 소급 적용(백필)할 때 대상 목록을 훑어보는 용도."""
+    service = _get_service()
+    posts = []
+    request = service.posts().list(blogId=BLOGGER_BLOG_ID, fetchBodies=False, status="LIVE")
+    while request is not None:
+        response = request.execute()
+        for item in response.get("items", []):
+            posts.append(
+                {
+                    "id": item.get("id"),
+                    "title": item.get("title"),
+                    "labels": item.get("labels", []),
+                    "url": item.get("url"),
+                }
+            )
+        request = service.posts().list_next(request, response)
+    return posts
+
+
+def update_post(post_id, title=None, html_content=None, search_description=None, labels=None):
     """발행된 글을 수정한다 (사진 추가, 오타 수정 등).
 
     Blogger의 posts().update()는 전체 교체(PUT) 방식이라, title을 안 보내면
-    제목이 빈 값으로 덮어써진다. 그래서 title/html_content/searchDescription 중
+    제목이 빈 값으로 덮어써진다. 그래서 title/html_content/searchDescription/labels 중
     지정 안 한 값은 반드시 현재 값을 먼저 읽어와 채운 뒤 보낸다 — 절대로 content만
     달랑 보내지 말 것."""
     service = _get_service()
@@ -81,6 +105,7 @@ def update_post(post_id, title=None, html_content=None, search_description=None)
         "searchDescription": (
             search_description if search_description is not None else current.get("searchDescription", "")
         ),
+        "labels": labels if labels is not None else current.get("labels", []),
     }
     return service.posts().update(blogId=BLOGGER_BLOG_ID, postId=post_id, body=body).execute()
 
