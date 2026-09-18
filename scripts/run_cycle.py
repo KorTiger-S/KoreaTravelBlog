@@ -41,23 +41,47 @@
        관련처럼 외국인 관광객이 특히 좋아할 만한 소재를 우선적으로 고려해 최대 5~6개를 골라
        "지금 서울에서 놓치기 아까운 행사" 같은 로스터 글로 작성한다. 나머지 작성 방식(사진, 콤마로
        여러 id 지정, 다음 달 축제 로스터와 posted_ids 공유 등)은 2)의 축제 로스터와 동일하다.
-  4) 여전히 아무 주제도 없다면, 초반에는 여행 팁 콘텐츠를 우선한다:
+  4) 격주 행사 로스터도 해당 없으면, 오늘이 화요일인지 확인한다:
+     `fetch-tuesday-destination-theme` 실행
+     - "not_due"면 화요일이 아니므로 5)로 넘어간다
+     - "no_themes_left"면 state/destination_theme_backlog.json의 테마를 다 다뤘다는 뜻이다.
+       매주 화요일 콘텐츠가 끊기지 않도록, 에이전트가 기존 테마와 같은 결(K-pop 테마 투어, K-뷰티/쇼핑
+       투어, 한국문화체험, 역사/미술관 전시, 클럽&펍&바 문화 같은 "N박N일" 또는 "테마 투어" 형식)의
+       새 테마를 직접 구상해 `state.add_destination_theme(theme_id, topic)`으로 추가한 뒤 5)로
+       넘어가지 않고 그 테마로 바로 글을 쓴다.
+     - "ok"면 {id, topic} 테마 하나가 나온다. TourAPI 장소 데이터가 아니라 일반 지식(및 필요시
+       WebSearch로 실제 존재하는 장소·최신 정보 확인)을 바탕으로 에이전트가 해당 테마의 2박3일(또는
+       주제에 맞는 기간) 여행 코스를 직접 구성해 글을 쓴 뒤 `save-draft --content-id <theme id> ...`
+  5) 화요일 여행지 테마도 해당 없으면, 오늘이 수요일인지 확인한다:
+     `fetch-wednesday-food-topic` 실행
+     - "not_due"면 수요일이 아니므로 6)으로 넘어간다
+     - "no_topics_left"면 state/food_topic_backlog.json의 주제를 다 다뤘다는 뜻이다. 매주 수요일
+       콘텐츠가 끊기지 않도록, 에이전트가 기존 주제와 같은 결의 새 맛집/음식 주제를 직접 구상해
+       `state.add_food_topic(topic_id, topic)`으로 추가한 뒤 6)으로 넘어가지 않고 그 주제로 바로
+       글을 쓴다.
+     - "ok"면 {id, topic} 주제 하나가 나온다. 일반 지식(및 필요시 WebSearch)을 바탕으로 에이전트가
+       글을 쓴다. README의 "맛집/음식 글 추가 원칙" 준수 필수 (매운 음식 미리 경고, 예약 필수
+       식당 지양, 예약앱 관련 글은 실제 외국인 이용 가능 여부를 WebSearch로 확인 후 작성).
+       `save-draft --content-id <topic id> ...`
+  6) 여전히 아무 주제도 없다면, 여행 팁 콘텐츠를 우선한다:
      a) `next-tip` 실행 → 아직 안 쓴 팁 주제가 있으면 {id, topic}이 나옴. 에이전트가 일반 지식(및
         필요시 WelcomeToKorea/ 같은 기존 검증 자료)을 바탕으로 글을 쓴 뒤
         `save-draft --content-id <tip id> ...`
      b) 팁 주제가 소진됐으면("no_tips_left") `fetch-next` 실행 → TourAPI 순회로 관광지 자동 선정
-  5) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성 (README의 콘텐츠 작성 원칙 준수:
+  7) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성 (README의 콘텐츠 작성 원칙 준수:
      소주제마다 사진 1장 이상, 한국 초행자 기준 쉬운 문장, 3년 이상 지난 정보/사진은 재검증)
-  6) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
-  7) 검색결과에 뜨는 요약(meta description)도 영문 150~160자 내외로 하나 작성 (SEO용, 본문에는 안 들어감)
-  8) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..." --labels "..."`로
+  8) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
+  9) 검색결과에 뜨는 요약(meta description)도 영문 150~160자 내외로 하나 작성 (SEO용, 본문에는 안 들어감)
+  10) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..." --labels "..."`로
      초안 저장 + 텔레그램 전송
      (한글 요약과 meta description 모두 블로그 본문에는 안 들어감 — 한글 요약은 텔레그램 미리보기용.
      meta description은 Blogger API의 searchDescription 저장 버그 때문에 자동 반영이 안 되므로,
      발행 완료 시 텔레그램 메시지에 URL과 함께 다시 안내되고 사용자가 Blogger 편집 화면에서 직접 입력함.
      labels는 Blogger 라벨(왼쪽 메뉴 카테고리 가젯에 쓰임)로 실제 발행에 반영됨 — 콤마로 여러 개 지정
      가능. 블로그 본문/독자가 영어권이므로 라벨도 영어로 짓는다. 글감을 가져온 단계에 맞춰 하나 이상
-     고른다: fetch-monthly-festivals/fetch-biweekly-events → "Festivals & Events", next-tip →
+     고른다: fetch-monthly-festivals/fetch-biweekly-events → "Festivals & Events", fetch-tuesday-
+     destination-theme → "Destination Guides"(+ 세부, 예: "K-pop", "Shopping", "Nightlife"),
+     fetch-wednesday-food-topic → "Food"(+ 세부, 예: "Restaurants", "Street Food"), next-tip →
      "Travel Tips"(+ 세부 주제, 예: "Money", "Transportation", "Connectivity"), fetch-next →
      관광지 성격에 맞게 "Attractions"/"Food"/"Accommodation" 등)
 
@@ -65,6 +89,8 @@
   python run_cycle.py check-replies
   python run_cycle.py fetch-monthly-festivals
   python run_cycle.py fetch-biweekly-events
+  python run_cycle.py fetch-tuesday-destination-theme
+  python run_cycle.py fetch-wednesday-food-topic
   python run_cycle.py next-tip
   python run_cycle.py fetch-next
   python run_cycle.py search-topic --keyword "Gyeongbokgung"
@@ -97,6 +123,8 @@ APPROVAL_WORDS = {"승인", "발행", "ok", "okay", "yes", "go", "publish"}
 KST = ZoneInfo("Asia/Seoul")
 FESTIVAL_TRIGGER_DAYS_BEFORE_MONTH_END = 3  # 이번 달 마지막 이 날짜(포함)부터 다음 달 축제 로스터 시도
 EVENTS_LOOKAHEAD_DAYS = 21  # 격주 월요일 행사 로스터가 내다보는 기간 (2주 주기 + 여유)
+TUESDAY_ISO_WEEKDAY = 2  # 매주 화요일: 여행지 테마 로스터
+WEDNESDAY_ISO_WEEKDAY = 3  # 매주 수요일: 맛집/음식 로스터
 
 
 def cmd_check_replies(args):
@@ -241,6 +269,42 @@ def cmd_fetch_biweekly_events(args):
         for e in new_events
     ]
     print(json.dumps({"status": "ok", "events": trimmed}, ensure_ascii=False))
+
+
+def cmd_fetch_tuesday_destination_theme(args):
+    """매주 화요일에만 동작. TourAPI 장소 데이터가 아니라 일반 지식을 바탕으로 에이전트가 직접
+    쓰는 "테마 여행지 추천" 글감(예: K-pop 테마 2박3일)을 state/destination_theme_backlog.json에서
+    순서대로 꺼내준다 (next-tip과 동일한 방식, 요일만 게이팅됨). 목록이 소진되면 에이전트가 같은
+    결의 새 테마를 직접 만들어 state.add_destination_theme()로 추가한 뒤 그 테마로 글을 쓴다."""
+    today = datetime.now(KST).date()
+    if today.isoweekday() != TUESDAY_ISO_WEEKDAY:
+        print(json.dumps({"status": "not_due"}, ensure_ascii=False))
+        return
+
+    posted_ids = state.load_posted_ids()
+    for theme in state.load_destination_theme_backlog():
+        if theme["id"] not in posted_ids:
+            print(json.dumps({"status": "ok", "theme": theme}, ensure_ascii=False))
+            return
+    print(json.dumps({"status": "no_themes_left"}, ensure_ascii=False))
+
+
+def cmd_fetch_wednesday_food_topic(args):
+    """매주 수요일에만 동작. TourAPI 장소 데이터가 아니라 일반 지식(및 필요시 WebSearch)을 바탕으로
+    에이전트가 직접 쓰는 "맛집/음식 추천" 글감을 state/food_topic_backlog.json에서 순서대로
+    꺼내준다 (next-tip과 동일한 방식, 요일만 게이팅됨). 목록이 소진되면 에이전트가 같은 결의 새
+    주제를 직접 만들어 state.add_food_topic()으로 추가한 뒤 그 주제로 글을 쓴다."""
+    today = datetime.now(KST).date()
+    if today.isoweekday() != WEDNESDAY_ISO_WEEKDAY:
+        print(json.dumps({"status": "not_due"}, ensure_ascii=False))
+        return
+
+    posted_ids = state.load_posted_ids()
+    for topic in state.load_food_topic_backlog():
+        if topic["id"] not in posted_ids:
+            print(json.dumps({"status": "ok", "topic": topic}, ensure_ascii=False))
+            return
+    print(json.dumps({"status": "no_topics_left"}, ensure_ascii=False))
 
 
 def cmd_search_topic(args):
@@ -402,6 +466,8 @@ def main():
     sub.add_parser("check-replies")
     sub.add_parser("fetch-monthly-festivals")
     sub.add_parser("fetch-biweekly-events")
+    sub.add_parser("fetch-tuesday-destination-theme")
+    sub.add_parser("fetch-wednesday-food-topic")
     sub.add_parser("next-tip")
     sub.add_parser("fetch-next")
 
@@ -443,6 +509,8 @@ def main():
         "check-replies": cmd_check_replies,
         "fetch-monthly-festivals": cmd_fetch_monthly_festivals,
         "fetch-biweekly-events": cmd_fetch_biweekly_events,
+        "fetch-tuesday-destination-theme": cmd_fetch_tuesday_destination_theme,
+        "fetch-wednesday-food-topic": cmd_fetch_wednesday_food_topic,
         "next-tip": cmd_next_tip,
         "fetch-next": cmd_fetch_next,
         "search-topic": cmd_search_topic,

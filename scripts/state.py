@@ -10,6 +10,8 @@ PENDING_DRAFT_PATH = os.path.join(STATE_DIR, "pending_draft.json")
 TELEGRAM_OFFSET_PATH = os.path.join(STATE_DIR, "telegram_offset.json")
 CRAWL_CURSOR_PATH = os.path.join(STATE_DIR, "crawl_cursor.json")
 TIPS_BACKLOG_PATH = os.path.join(STATE_DIR, "tips_backlog.json")
+DESTINATION_THEME_BACKLOG_PATH = os.path.join(STATE_DIR, "destination_theme_backlog.json")
+FOOD_TOPIC_BACKLOG_PATH = os.path.join(STATE_DIR, "food_topic_backlog.json")
 
 
 def load_json(path, default):
@@ -80,3 +82,31 @@ def save_crawl_cursor(cursor):
 def load_tips_backlog():
     data = load_json(TIPS_BACKLOG_PATH, {"tips": []})
     return data.get("tips", [])
+
+
+def load_destination_theme_backlog():
+    data = load_json(DESTINATION_THEME_BACKLOG_PATH, {"themes": []})
+    return data.get("themes", [])
+
+
+def add_destination_theme(theme_id, topic):
+    """목록이 소진됐을 때 에이전트가 같은 결의 새 테마를 직접 추가할 때 쓴다."""
+    data = load_json(DESTINATION_THEME_BACKLOG_PATH, {"themes": []})
+    themes = data.get("themes", [])
+    if not any(t["id"] == theme_id for t in themes):
+        themes.append({"id": theme_id, "topic": topic})
+    save_json(DESTINATION_THEME_BACKLOG_PATH, {"themes": themes})
+
+
+def load_food_topic_backlog():
+    data = load_json(FOOD_TOPIC_BACKLOG_PATH, {"topics": []})
+    return data.get("topics", [])
+
+
+def add_food_topic(topic_id, topic):
+    """목록이 소진됐을 때 에이전트가 같은 결의 새 주제를 직접 추가할 때 쓴다."""
+    data = load_json(FOOD_TOPIC_BACKLOG_PATH, {"topics": []})
+    topics = data.get("topics", [])
+    if not any(t["id"] == topic_id for t in topics):
+        topics.append({"id": topic_id, "topic": topic})
+    save_json(FOOD_TOPIC_BACKLOG_PATH, {"topics": topics})

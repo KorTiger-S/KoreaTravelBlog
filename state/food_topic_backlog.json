@@ -1,0 +1,36 @@
+{
+  "topics": [
+    {
+      "id": "food-reservation-apps",
+      "topic": "Restaurant reservation apps in Korea (Tabling/테이블링, CatchTable/캐치테이블) — do they actually work for foreign tourists without a Korean phone number? Check current app store listings/English support via WebSearch before writing, don't assume."
+    },
+    {
+      "id": "food-korean-bbq",
+      "topic": "Korean BBQ (samgyeopsal, galbi) for first-timers — how it works, walk-in friendly spots, no reservation needed"
+    },
+    {
+      "id": "food-chimaek",
+      "topic": "Korean fried chicken & beer (chimaek) culture — casual, walk-in friendly"
+    },
+    {
+      "id": "food-street-food-markets",
+      "topic": "Street food markets (Myeongdong, Gwangjang Market, Namdaemun) — must-try dishes with spice-level warnings"
+    },
+    {
+      "id": "food-comfort-food-spice-guide",
+      "topic": "Korean comfort food for beginners (bibimbap, kimchi jjigae, japchae, doenjang jjigae) with a spice-level guide"
+    },
+    {
+      "id": "food-cafe-dessert-culture",
+      "topic": "Korean cafe & dessert culture (bingsu, hotteok, themed cafes) — walk-in friendly options"
+    },
+    {
+      "id": "food-vegetarian-halal",
+      "topic": "Vegetarian, vegan, and halal-friendly food options in Korea"
+    },
+    {
+      "id": "food-late-night-eats",
+      "topic": "Late-night and 24-hour food options in Korea for jet-lagged travelers"
+    }
+  ]
+}

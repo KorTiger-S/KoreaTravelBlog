@@ -1,0 +1,24 @@
+{
+  "themes": [
+    {
+      "id": "dest-kpop-tour-2n3d",
+      "topic": "K-pop themed tour (2 nights 3 days) — agency buildings, K-pop stores, MV/drama filming spots, fan cafes"
+    },
+    {
+      "id": "dest-kbeauty-shopping-tour",
+      "topic": "K-beauty & shopping tour — cosmetics streets (Myeongdong, Olive Young), department stores, outlets, duty-free"
+    },
+    {
+      "id": "dest-korean-culture-2n3d",
+      "topic": "Korean culture experience (2 nights 3 days) — hanbok, palaces, traditional villages, temple stay / tea ceremony"
+    },
+    {
+      "id": "dest-history-art-2n3d",
+      "topic": "History & art exhibition tour (2 nights 3 days) — museums, palaces, contemporary art galleries"
+    },
+    {
+      "id": "dest-nightlife-club-pub-bar",
+      "topic": "Korean club, pub & bar culture experience — Hongdae/Itaewon/Gangnam nightlife guide and drinking etiquette"
+    }
+  ]
+}
