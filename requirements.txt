@@ -5,3 +5,4 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 tzdata>=2024.1
 cffi>=1.15.0
+pytrends>=4.9.2
