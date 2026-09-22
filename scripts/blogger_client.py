@@ -68,6 +68,42 @@ def get_post(post_id):
     return service.posts().get(blogId=BLOGGER_BLOG_ID, postId=post_id).execute()
 
 
+def publish_page(title, html_content, is_draft=False):
+    """정적 페이지(Privacy Policy, About, Contact 등)를 생성한다. 글(posts)과 달리
+    라벨/검색설명이 없고, 사이드바 메뉴가 아니라 Blogger의 Pages 가젯에 노출된다."""
+    if not BLOGGER_BLOG_ID:
+        raise RuntimeError("BLOGGER_BLOG_ID가 설정되어 있지 않습니다 (.env 확인)")
+    service = _get_service()
+    body = {"title": title, "content": html_content}
+    result = (
+        service.pages()
+        .insert(blogId=BLOGGER_BLOG_ID, body=body, isDraft=is_draft)
+        .execute()
+    )
+    return result
+
+
+def list_pages():
+    service = _get_service()
+    result = service.pages().list(blogId=BLOGGER_BLOG_ID).execute()
+    return [
+        {"id": item.get("id"), "title": item.get("title"), "url": item.get("url")}
+        for item in result.get("items", [])
+    ]
+
+
+def update_page(page_id, title=None, html_content=None):
+    """update_post와 동일한 이유로 전체 교체(PUT) 방식이라, 지정 안 한 값은
+    현재 값을 먼저 읽어와 채운 뒤 보낸다."""
+    service = _get_service()
+    current = service.pages().get(blogId=BLOGGER_BLOG_ID, pageId=page_id).execute()
+    body = {
+        "title": title if title is not None else current.get("title", ""),
+        "content": html_content if html_content is not None else current.get("content", ""),
+    }
+    return service.pages().update(blogId=BLOGGER_BLOG_ID, pageId=page_id, body=body).execute()
+
+
 def list_posts():
     """이미 발행된(live) 글 전체를 최신순으로 나열한다. 본문(content)은 라벨 판단에
     필요 없고 응답만 무거워지므로 fetchBodies=False로 제외한다.
