@@ -73,7 +73,7 @@
   7) 에이전트가 그 데이터를 바탕으로 제목(title)과 HTML 본문을 직접 작성 (README의 콘텐츠 작성 원칙 준수:
      소주제마다 사진 1장 이상, 한국 초행자 기준 쉬운 문장, 3년 이상 지난 정보/사진은 재검증)
   8) 블로그 본문과는 별개로, 각 소주제가 뭘 다루는지 한글로 짧게 요약한 텍스트를 하나 더 작성
-  9) 검색결과에 뜨는 요약(meta description)도 영문 150~160자 내외로 하나 작성 (SEO용, 본문에는 안 들어감)
+  9) 검색결과에 뜨는 요약(meta description)도 영문 150자 이내(공백 포함)로 하나 작성 (SEO용, 본문에는 안 들어감)
   10) `save-draft --content-id ... --html-file ... --summary-ko-file ... --meta-description "..." --labels "..."`로
      초안 저장 + 텔레그램 전송
      (한글 요약과 meta description 모두 블로그 본문에는 안 들어감 — 한글 요약은 텔레그램 미리보기용.
@@ -348,6 +348,19 @@ def _parse_labels(labels_arg):
     return [label.strip() for label in labels_arg.split(",") if label.strip()]
 
 
+META_DESCRIPTION_MAX_LEN = 150
+
+
+def _meta_description(value):
+    """Blogger 검색 설명 칸은 150자 제한이 있어서, 사용자가 그대로 붙여넣을 수 있게 길이를 강제한다."""
+    value = value.strip()
+    if len(value) > META_DESCRIPTION_MAX_LEN:
+        raise argparse.ArgumentTypeError(
+            f"meta description은 {META_DESCRIPTION_MAX_LEN}자 이내여야 합니다 (현재 {len(value)}자)"
+        )
+    return value
+
+
 def _read_summary_ko(args):
     if not args.summary_ko_file:
         return ""
@@ -485,7 +498,7 @@ def main():
     p_save.add_argument("--content-id", required=True, help="TourAPI contentId 또는 팁 id. 콤마로 여러 id 지정 가능 (여러 축제를 한 로스터 글로 묶을 때 등)")
     p_save.add_argument("--html-file")
     p_save.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
-    p_save.add_argument("--meta-description", help="검색결과 요약(searchDescription)용 영문 150~160자 내외 문구")
+    p_save.add_argument("--meta-description", type=_meta_description, help="검색결과 요약(searchDescription)용 영문 150자 이내 문구")
     p_save.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 왼쪽 메뉴 카테고리 가젯에 쓰임")
     p_save.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
 
@@ -494,7 +507,7 @@ def main():
     p_revise.add_argument("--html-file")
     p_revise.add_argument("--content-id", help="완전히 다른 주제로 바꾸는 경우에만 지정 (콤마로 여러 id 지정 가능 — 여러 글감을 한 포스팅으로 묶을 때)")
     p_revise.add_argument("--summary-ko-file", help="텔레그램에 같이 보낼 한글 소주제 요약 (블로그 본문에는 안 들어감)")
-    p_revise.add_argument("--meta-description", help="검색결과 요약(searchDescription)용 영문 150~160자 내외 문구")
+    p_revise.add_argument("--meta-description", type=_meta_description, help="검색결과 요약(searchDescription)용 영문 150자 이내 문구")
     p_revise.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 생략하면 기존 라벨 유지")
     p_revise.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
 
