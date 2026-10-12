@@ -53,18 +53,28 @@
        WebSearch로 실제 존재하는 장소·최신 정보 확인)을 바탕으로 에이전트가 해당 테마의 2박3일(또는
        주제에 맞는 기간) 여행 코스를 직접 구성해 글을 쓴 뒤 `save-draft --content-id <theme id> ...`
   5) 화요일 여행지 테마도 해당 없으면, 오늘이 수요일인지 확인한다:
-     `fetch-wednesday-food-topic` 실행
+     `fetch-wednesday-food-topic` 실행. 수요일은 격주로 "음식 메뉴 소개"(홀수 ISO 주)와
+     "음식점 소개"(짝수 ISO 주)를 번갈아 낸다. 두 글 사이에 음식 연관성은 필요 없다.
      - "not_due"면 수요일이 아니므로 6)으로 넘어간다
-     - "no_topics_left"면 state/food_topic_backlog.json의 주제를 다 다뤘다는 뜻이다. 매주 수요일
-       콘텐츠가 끊기지 않도록, 에이전트가 기존 주제와 같은 결의 새 맛집/음식 주제를 직접 구상해
-       `state.add_food_topic(topic_id, topic)`으로 추가한 뒤 6)으로 넘어가지 않고 그 주제로 바로
-       글을 쓴다.
-     - "ok"면 {id, topic} 주제 하나가 나온다. 일반 지식(및 필요시 WebSearch)을 바탕으로 에이전트가
-       글을 쓴다. README의 "맛집/음식 글 추가 원칙" 준수 필수 (특정 식당 추천 vs 음식/문화 설명 중
-       주제에 맞게 선택 — 식당명을 넣을 땐 TourAPI 음식점 데이터나 WebSearch로 실존/영업 여부 확인,
-       매운 음식 미리 경고, 예약 필수 식당 지양, 예약앱 관련 글은 실제 외국인 이용 가능 여부를
-       WebSearch로 확인 후 작성).
-       `save-draft --content-id <topic id> ...`
+     - "ok" + kind "food_topic"이면 {id, topic} 주제 하나가 나온다. 일반 지식(및 필요시 WebSearch)을
+       바탕으로 음식 메뉴/식문화 글을 쓴다. `save-draft --content-id <topic id> ...`
+     - "ok" + kind "restaurants"면 아직 안 다룬 식당 목록(미쉐린 가이드 서울 빕구르망, state/
+       restaurant_backlog.json)이 나온다. 음식 메뉴 주제가 소진된 뒤에는 매주 이쪽만 나온다
+       (새 음식 메뉴 주제를 만들지 않는다). 에이전트가 3~5곳을 골라 동네별 또는 음식별로 묶는다
+       (어느 쪽으로 묶을지는 매번 에이전트가 판단). 각 식당은 WebSearch로 위치·현재 영업 여부·
+       영업시간을 확인하고, `search-topic --keyword "<식당명>"`으로 TourAPI(음식점 contentTypeId 82)에도
+       있으면 `fetch-detail`로 사진·영업시간·메뉴를 보강한다. 확인 못 한 식당은 빼고 다른 식당을 고른다.
+       TourAPI에 사진이 없는 식당은 다른 곳에서 사진을 찾지 말고, 본문의 그 식당 소주제 자리에
+       `<!-- PHOTO NEEDED: <식당명> -->` 주석만 남긴 채 `--reviewer-note`로 "사진이 없는 식당: A, B —
+       사진(이미지 URL)을 직접 보내주시면 넣어서 다시 보내드릴게요." 같은 안내를 텔레그램에 붙인다.
+       사용자가 이미지 URL을 답장하면 그 자리에 `<img>`로 넣어 `revise-draft`로 반영한다.
+       `save-draft --content-id "rest-a,rest-b,..." ...` (식당 id를 콤마로 모두 넘겨 중복 방지)
+     - "no_restaurants_left"면 식당 목록을 다 다뤘다는 뜻이다. 최신 미쉐린 빕구르망 목록 등을
+       WebSearch로 확인해 새 식당을 `state.add_restaurant(id, name, cuisine, source)`로 추가한 뒤
+       6)으로 넘어가지 않고 그 식당들로 바로 글을 쓴다.
+     두 경우 모두 README의 "맛집/음식 글 추가 원칙" 준수 필수 (식당명은 실존/영업 여부 확인 후에만,
+     매운 음식 미리 경고, 예약 필수 식당 지양, 예약앱 관련 글은 실제 외국인 이용 가능 여부를
+     WebSearch로 확인 후 작성).
   6) 여전히 아무 주제도 없다면, 여행 팁 콘텐츠를 우선한다:
      a) `next-tip` 실행 → 아직 안 쓴 팁 주제가 있으면 {id, topic}이 나옴. 에이전트가 일반 지식(및
         필요시 WelcomeToKorea/ 같은 기존 검증 자료)을 바탕으로 글을 쓴 뒤
@@ -83,7 +93,7 @@
      가능. 블로그 본문/독자가 영어권이므로 라벨도 영어로 짓는다. 글감을 가져온 단계에 맞춰 하나 이상
      고른다: fetch-monthly-festivals/fetch-biweekly-events → "Festivals & Events", fetch-tuesday-
      destination-theme → "Destination Guides"(+ 세부, 예: "K-pop", "Shopping", "Nightlife"),
-     fetch-wednesday-food-topic → "Food"(+ 세부, 예: "Restaurants", "Street Food"), next-tip →
+     fetch-wednesday-food-topic → "Food"(+ 세부, 예: 음식점 소개 주는 "Restaurants", 음식 메뉴 주는 "Street Food" 등), next-tip →
      "Travel Tips"(+ 세부 주제, 예: "Money", "Transportation", "Connectivity"), fetch-next →
      관광지 성격에 맞게 "Attractions"/"Food"/"Accommodation" 등)
 
@@ -126,7 +136,7 @@ KST = ZoneInfo("Asia/Seoul")
 FESTIVAL_TRIGGER_DAYS_BEFORE_MONTH_END = 3  # 이번 달 마지막 이 날짜(포함)부터 다음 달 축제 로스터 시도
 EVENTS_LOOKAHEAD_DAYS = 21  # 격주 월요일 행사 로스터가 내다보는 기간 (2주 주기 + 여유)
 TUESDAY_ISO_WEEKDAY = 2  # 매주 화요일: 여행지 테마 로스터
-WEDNESDAY_ISO_WEEKDAY = 3  # 매주 수요일: 맛집/음식 로스터
+WEDNESDAY_ISO_WEEKDAY = 3  # 매주 수요일: 홀수 주 음식 메뉴 소개 / 짝수 주 음식점 소개
 
 
 def cmd_check_replies(args):
@@ -292,21 +302,30 @@ def cmd_fetch_tuesday_destination_theme(args):
 
 
 def cmd_fetch_wednesday_food_topic(args):
-    """매주 수요일에만 동작. TourAPI 장소 데이터가 아니라 일반 지식(및 필요시 WebSearch)을 바탕으로
-    에이전트가 직접 쓰는 "맛집/음식 추천" 글감을 state/food_topic_backlog.json에서 순서대로
-    꺼내준다 (next-tip과 동일한 방식, 요일만 게이팅됨). 목록이 소진되면 에이전트가 같은 결의 새
-    주제를 직접 만들어 state.add_food_topic()으로 추가한 뒤 그 주제로 글을 쓴다."""
+    """매주 수요일에만 동작. 격주로 "음식 메뉴 소개"와 "음식점 소개"를 번갈아 낸다.
+    - 홀수 ISO 주: state/food_topic_backlog.json에서 안 쓴 음식 메뉴/식문화 주제 하나 (kind=food_topic)
+    - 짝수 ISO 주, 또는 음식 메뉴 주제가 소진된 뒤엔 매주: state/restaurant_backlog.json(미쉐린 빕구르망
+      서울 목록)에서 안 다룬 식당 전체 목록 (kind=restaurants). 에이전트가 그중 3~5곳을 골라 한 글로 쓴다.
+    두 주제 사이에 음식 연관성은 필요 없다. 음식 메뉴 주제가 소진되면 새 주제를 만들지 않고 음식점
+    소개만 진행한다. 식당까지 소진되면 no_restaurants_left — 에이전트가 WebSearch로 확인한 새 식당을
+    state.add_restaurant()로 추가한 뒤 그 식당들로 글을 쓴다."""
     today = datetime.now(KST).date()
     if today.isoweekday() != WEDNESDAY_ISO_WEEKDAY:
         print(json.dumps({"status": "not_due"}, ensure_ascii=False))
         return
 
     posted_ids = state.load_posted_ids()
-    for topic in state.load_food_topic_backlog():
-        if topic["id"] not in posted_ids:
-            print(json.dumps({"status": "ok", "topic": topic}, ensure_ascii=False))
-            return
-    print(json.dumps({"status": "no_topics_left"}, ensure_ascii=False))
+    if today.isocalendar().week % 2 == 1:
+        for topic in state.load_food_topic_backlog():
+            if topic["id"] not in posted_ids:
+                print(json.dumps({"status": "ok", "kind": "food_topic", "topic": topic}, ensure_ascii=False))
+                return
+
+    restaurants = [r for r in state.load_restaurant_backlog() if r["id"] not in posted_ids]
+    if not restaurants:
+        print(json.dumps({"status": "no_restaurants_left"}, ensure_ascii=False))
+        return
+    print(json.dumps({"status": "ok", "kind": "restaurants", "restaurants": restaurants}, ensure_ascii=False))
 
 
 def cmd_search_topic(args):

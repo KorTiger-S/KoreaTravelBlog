@@ -81,13 +81,28 @@ python scripts/run_cycle.py check-replies
   ```
   python scripts/run_cycle.py fetch-wednesday-food-topic
   ```
+  수요일은 **격주로 "음식 메뉴 소개"(홀수 ISO 주)와 "음식점 소개"(짝수 ISO 주)를 번갈아** 냅니다.
+  두 글 사이에 음식 연관성은 필요 없습니다.
   - `"not_due"`(수요일이 아님)면 아래 여행 팁 우선 순서로 넘어갑니다.
-  - `"no_topics_left"`면 `state/food_topic_backlog.json`의 주제를 다 다뤘다는 뜻입니다. 수요일
-    콘텐츠가 끊기지 않도록, 기존 주제와 같은 결의 새 맛집/음식 주제를 에이전트가 직접 구상해
-    `state.add_food_topic(topic_id, topic)`으로 추가한 뒤, 여행 팁 순서로 넘어가지 않고 그 주제로
-    바로 글을 씁니다.
-  - `"ok"`면 `{id, topic}` 주제 하나가 나옵니다. 일반 지식(및 필요하면 WebSearch)을 바탕으로 글을
-    쓰되, 아래 **"맛집/음식 글 추가 원칙"**을 반드시 지킵니다.
+  - `"ok"` + `"kind": "food_topic"`이면 `state/food_topic_backlog.json`의 `{id, topic}` 주제 하나가
+    나옵니다. 일반 지식(및 필요하면 WebSearch)을 바탕으로 음식 메뉴/식문화 글을 씁니다.
+  - `"ok"` + `"kind": "restaurants"`면 `state/restaurant_backlog.json`(미쉐린 가이드 서울 빕구르망
+    목록)에서 아직 안 다룬 식당 목록이 나옵니다. **음식 메뉴 주제가 소진되면 새 주제를 만들지 않고
+    매주 이쪽만 나옵니다.** 에이전트가 3~5곳을 골라 동네별 또는 음식별로 묶어 한 글로 씁니다
+    (어느 쪽으로 묶을지는 매번 판단). 각 식당은 WebSearch로 위치·현재 영업 여부·영업시간을 확인하고,
+    `search-topic --keyword "<식당명>"`으로 TourAPI(음식점 contentTypeId 82)에도 있으면
+    `fetch-detail`로 사진·영업시간·메뉴를 보강합니다. 확인 못 한 식당은 빼고 다른 식당을 고릅니다.
+    **TourAPI에 사진이 없는 식당은 Wikimedia 등 다른 곳에서 사진을 찾지 않습니다.** 본문의 그 식당
+    소주제 자리에 `<!-- PHOTO NEEDED: <식당명> -->` 주석만 남기고, `--reviewer-note`로 "사진이 없는
+    식당: A, B — 사진(이미지 URL)을 직접 보내주시면 넣어서 다시 보내드릴게요." 같은 안내를 텔레그램에
+    붙입니다 (사용자가 직접 사진을 넣음). 사용자가 이미지 URL을 답장하면 다음 `check-replies` 피드백으로
+    들어오므로, 그 자리에 `<img>`로 넣어 `revise-draft`로 반영합니다. 이 경우는 "소주제마다 사진 1장
+    이상" 원칙의 예외로, 사진 없이 초안을 보내도 됩니다.
+    저장할 땐 `save-draft --content-id "rest-a,rest-b,..."`처럼 고른 식당 id를 콤마로 모두 넘깁니다.
+  - `"no_restaurants_left"`면 식당 목록을 다 다뤘다는 뜻입니다. 최신 미쉐린 빕구르망 목록 등을
+    WebSearch로 확인해 새 식당을 `state.add_restaurant(id, name, cuisine, source)`로 추가한 뒤,
+    여행 팁 순서로 넘어가지 않고 그 식당들로 바로 글을 씁니다.
+  - 어느 경우든 아래 **"맛집/음식 글 추가 원칙"**을 반드시 지킵니다.
 - 수요일 맛집/음식 주제도 해당 없으면, **여행 팁 콘텐츠를 먼저 소진**합니다:
   ```
   python scripts/run_cycle.py next-tip
@@ -125,12 +140,12 @@ python scripts/run_cycle.py check-replies
 - **비교형 주제는 글 마지막에 비교표를 넣는다.** 지하철 vs 버스 vs 택시 vs 공항철도, 교통카드 종류, 유심/eSIM 요금제처럼 여러 선택지를 비교하는 글이면, 섹션별 설명을 다 쓴 뒤 글 마지막 쪽에 가격/소요시간/편의성/추천 대상 등을 정리한 비교표(`<table>`)를 추가한다. 단일 장소/규정 소개 글처럼 비교 대상이 없는 주제는 표를 억지로 넣지 않는다.
 - **중요 키워드는 글자색을 입혀 강조한다.** 가격, 시간, 역/노선명, 앱/카드 이름처럼 독자가 빠르게 훑어볼 때 눈에 띄어야 하는 핵심 단어는 `<span style="color:#C0392B;font-weight:600;">` 같은 식으로 색을 입힌다. 문단마다 남발하지 말고 섹션당 꼭 짚어야 할 키워드 1~3개 정도로 제한한다 (색이 너무 많으면 오히려 안 읽힘).
 - **검색결과 요약(meta description)을 영문 150자 이내(공백 포함)로 작성한다.** 150자를 넘기면 `save-draft`/`revise-draft`가 거부한다. 본문과는 별개로, 글의 핵심을 요약한 문장을 하나 써서 `save-draft`/`revise-draft`의 `--meta-description`으로 넘긴다. 이 값은 Blogger의 `searchDescription`(구글 검색결과에 뜨는 설명문)에 대응되지만, **Blogger API가 이 필드를 저장하지 않는 문제가 확인됨**(2026-09-15, `google-api-python-client`뿐 아니라 순수 HTTP PUT으로도 재현 — 이 파이프라인 코드 문제가 아니라 Blogger API 자체의 동작). 그래서 `check-replies`/`publish`로 발행이 끝나면 텔레그램 "발행 완료" 메시지에 글 URL과 함께 이 문구가 같이 오고, **사용자가 Blogger 글 편집 화면에서 직접 붙여넣는다.** (`publish_post`에 여전히 `search_description`을 넘기긴 하지만 저장 안 될 걸 알고 하는 것 — 나중에 Blogger 쪽에서 고쳐지면 자동으로 되던 대로 동작함.)
-- **매주 수요일 맛집/음식 글은 아래 원칙을 추가로 지킨다** (`fetch-wednesday-food-topic`로 나온 주제):
+- **매주 수요일 맛집/음식 글은 아래 원칙을 추가로 지킨다** (`fetch-wednesday-food-topic`로 나온 음식 메뉴 주제·음식점 목록 모두):
   - **"특정 식당 추천" vs "음식/문화 설명" 중 어느 쪽으로 쓸지는 주제마다 에이전트가 판단한다.**
     두 방식을 섞어 써도 된다 — 예를 들어 "길거리 음식 시장" 주제처럼 실제 장소(광장시장 등)가
     글의 핵심이면 구체적 상호/구역을 다루고, "한국식 BBQ 이용법"처럼 문화·이용법 설명이 핵심이면
     특정 식당명 없이 "이런 곳들은 대부분 walk-in"이라는 식으로 다뤄도 된다. **특정 식당을 이름으로
-    추천할 땐** TourAPI 음식점 데이터(`contentTypeId=39`, `get_area_based_list`/`search_keyword`로
+    추천할 땐** TourAPI 음식점 데이터(EngService2 기준 `contentTypeId=82`, `get_area_based_list`/`search_keyword`로
     조회) 또는 WebSearch로 그 식당이 실존하고 현재도 영업 중인지 확인한 뒤에만 넣는다 — 확인 안 된
     상호를 추측으로 적지 않는다.
   - **매운 음식·도전적인 메뉴는 미리 경고한다.** 청양고추, 불닭, 마라 등 외국인 기준 맵거나 향이
@@ -176,7 +191,9 @@ Blogger의 `posts().update()`는 부분 수정(PATCH)이 아니라 전체 교체
 - `tips_backlog.json` — 우선 발행할 여행 팁 주제 목록 (직접 편집해서 추가/삭제 가능)
 - `destination_theme_backlog.json` — 매주 화요일 여행지 테마 로스터 주제 목록 (`{id, topic}`). 소진되면
   에이전트가 같은 결의 새 테마를 직접 추가한다 (직접 편집도 가능)
-- `food_topic_backlog.json` — 매주 수요일 맛집/음식 로스터 주제 목록 (`{id, topic}`). 소진되면 에이전트가
-  같은 결의 새 주제를 직접 추가한다 (직접 편집도 가능)
+- `food_topic_backlog.json` — 수요일 홀수 주 음식 메뉴 소개 주제 목록 (`{id, topic}`). 소진되면 새 주제를
+  만들지 않고 수요일은 음식점 소개만 진행한다 (직접 편집해서 주제를 추가하면 다시 격주로 돌아감)
+- `restaurant_backlog.json` — 수요일 음식점 소개용 식당 목록 (`{id, name, cuisine, source}`, 미쉐린 가이드
+  서울 2026 빕구르망 51곳으로 시작). 소진되면 에이전트가 WebSearch로 확인한 새 식당을 추가한다
 
 이 파일들은 클라우드 루틴 실행 사이에 상태를 이어가기 위해 git에 커밋됩니다.

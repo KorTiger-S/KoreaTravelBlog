@@ -12,6 +12,7 @@ CRAWL_CURSOR_PATH = os.path.join(STATE_DIR, "crawl_cursor.json")
 TIPS_BACKLOG_PATH = os.path.join(STATE_DIR, "tips_backlog.json")
 DESTINATION_THEME_BACKLOG_PATH = os.path.join(STATE_DIR, "destination_theme_backlog.json")
 FOOD_TOPIC_BACKLOG_PATH = os.path.join(STATE_DIR, "food_topic_backlog.json")
+RESTAURANT_BACKLOG_PATH = os.path.join(STATE_DIR, "restaurant_backlog.json")
 
 
 def load_json(path, default):
@@ -110,3 +111,17 @@ def add_food_topic(topic_id, topic):
     if not any(t["id"] == topic_id for t in topics):
         topics.append({"id": topic_id, "topic": topic})
     save_json(FOOD_TOPIC_BACKLOG_PATH, {"topics": topics})
+
+
+def load_restaurant_backlog():
+    data = load_json(RESTAURANT_BACKLOG_PATH, {"restaurants": []})
+    return data.get("restaurants", [])
+
+
+def add_restaurant(restaurant_id, name, cuisine, source):
+    """식당 목록이 소진됐을 때 에이전트가 WebSearch로 확인한 새 식당(예: 새해 미쉐린 빕구르망)을 추가할 때 쓴다."""
+    data = load_json(RESTAURANT_BACKLOG_PATH, {"restaurants": []})
+    restaurants = data.get("restaurants", [])
+    if not any(r["id"] == restaurant_id for r in restaurants):
+        restaurants.append({"id": restaurant_id, "name": name, "cuisine": cuisine, "source": source})
+    save_json(RESTAURANT_BACKLOG_PATH, {"restaurants": restaurants})

@@ -1,0 +1,310 @@
+{
+  "restaurants": [
+    {
+      "id": "rest-woo-lae-oak",
+      "name": "Woo Lae Oak",
+      "cuisine": "Naengmyeon",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-pildong-myeonok",
+      "name": "Pildong Myeonok",
+      "cuisine": "Naengmyeon",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-gaeseong-mandu-koong",
+      "name": "Gaeseong Mandu Koong",
+      "cuisine": "Mandu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-mijin",
+      "name": "Mijin",
+      "cuisine": "Memil-guksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-sobakeeri-suzu",
+      "name": "Sobakeeri Suzu",
+      "cuisine": "Soba",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-anam",
+      "name": "ANAM",
+      "cuisine": "Dwaeji-gukbap",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-geumdwaeji-sikdang",
+      "name": "Geumdwaeji Sikdang",
+      "cuisine": "Barbecue",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-yurimmyeon",
+      "name": "Yurimmyeon",
+      "cuisine": "Memil-guksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-gosari-express",
+      "name": "Gosari Express",
+      "cuisine": "Vegan",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-hwangsaengga-kalguksu",
+      "name": "Hwangsaengga Kalguksu",
+      "cuisine": "Kalguksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-seoryung",
+      "name": "Seoryung",
+      "cuisine": "Memil-guksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-halmaejip",
+      "name": "Halmaejip",
+      "cuisine": "Korean",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-horapa",
+      "name": "HORAPA",
+      "cuisine": "Thai",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-yonggeumok",
+      "name": "Yonggeumok",
+      "cuisine": "Chueotang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-andeok",
+      "name": "Andeok",
+      "cuisine": "Korean",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-daesungjip",
+      "name": "Daesungjip",
+      "cuisine": "Doganitang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-youhan",
+      "name": "Youhan",
+      "cuisine": "Thai",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-jaha-son-mandu",
+      "name": "Jaha Son Mandu",
+      "cuisine": "Mandu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-alt-a",
+      "name": "ALT.a",
+      "cuisine": "Vegan",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-hwanggeum-kongbat",
+      "name": "Hwanggeum Kongbat",
+      "cuisine": "Dubu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-oilje",
+      "name": "Oilje",
+      "cuisine": "Korean",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-yukjeon-hoekwan",
+      "name": "Yukjeon Hoekwan",
+      "cuisine": "Bulgogi",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-neungdong-minari",
+      "name": "Neungdong Minari",
+      "cuisine": "Gomtang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-base-is-nice",
+      "name": "Base is nice",
+      "cuisine": "Vegetarian",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-kyewol",
+      "name": "Kyewol",
+      "cuisine": "Gomtang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-mattdol",
+      "name": "Mattdol",
+      "cuisine": "Mexican",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-mapo-ok",
+      "name": "Mapo Ok",
+      "cuisine": "Seolleongtang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-mandujip",
+      "name": "Mandujip",
+      "cuisine": "Mandu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-ggupdang",
+      "name": "Ggupdang",
+      "cuisine": "Barbecue",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-myeon-seoul",
+      "name": "Myeon Seoul",
+      "cuisine": "Noodles",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-nishimuramen",
+      "name": "Nishimuramen",
+      "cuisine": "Ramen",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-sarukame",
+      "name": "Sarukame",
+      "cuisine": "Ramen",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-jeongmyeon",
+      "name": "Jeongmyeon",
+      "cuisine": "Noodles",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-gebangsikdang",
+      "name": "Gebangsikdang",
+      "cuisine": "Gejang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-oreno-ramen",
+      "name": "Oreno Ramen",
+      "cuisine": "Ramen",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-damtaek",
+      "name": "Damtaek",
+      "cuisine": "Ramen",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-jin-jin",
+      "name": "Jin Jin",
+      "cuisine": "Chinese",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-okdongsik",
+      "name": "Okdongsik",
+      "cuisine": "Dwaeji-gukbap",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-seokyonanmyunbang",
+      "name": "Seokyonanmyunbang",
+      "cuisine": "Noodles",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-mipildam",
+      "name": "Mipildam",
+      "cuisine": "Mandu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-kyodaiya",
+      "name": "Kyodaiya",
+      "cuisine": "Udon",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-jungin-myeonok",
+      "name": "Jungin Myeonok",
+      "cuisine": "Naengmyeon",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-hapjeongok",
+      "name": "Hapjeongok",
+      "cuisine": "Gomtang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-yangyang-memil-makguksu",
+      "name": "Yangyang Memil Makguksu",
+      "cuisine": "Memil-guksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-hwa-hae-dang",
+      "name": "Hwa Hae Dang",
+      "cuisine": "Gejang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-subaru",
+      "name": "Subaru",
+      "cuisine": "Soba",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-gomtang-lab",
+      "name": "Gomtang Lab",
+      "cuisine": "Gomtang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-3rd-samgyetang",
+      "name": "3rd Samgyetang",
+      "cuisine": "Samgyetang",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-samcheongdong-sujebi",
+      "name": "Samcheongdong Sujebi",
+      "cuisine": "Sujebi",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-limbyungjoo-sandong-kalguksu",
+      "name": "Limbyungjoo Sandong Kalguksu",
+      "cuisine": "Kalguksu",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    },
+    {
+      "id": "rest-okdolhyunok",
+      "name": "Okdolhyunok",
+      "cuisine": "Naengmyeon",
+      "source": "MICHELIN Guide Seoul 2026 Bib Gourmand"
+    }
+  ]
+}
