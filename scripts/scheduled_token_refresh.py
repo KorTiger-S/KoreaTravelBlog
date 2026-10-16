@@ -1,4 +1,4 @@
-"""Windows 작업 스케줄러 전용. 6일마다 11:30 KST에 실행되어,
+"""Windows 작업 스케줄러 전용. 매주 월요일 11:30 KST에 실행되어,
 generate_oauth_token.py로 새 Blogger OAuth token.json을 발급받고,
 내용을 클립보드에 복사한 뒤 다음 수동 작업(claude.ai Environment의
 BLOGGER_TOKEN_JSON 갱신)을 텔레그램으로 안내한다.

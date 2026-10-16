@@ -1,4 +1,4 @@
-"""Windows 작업 스케줄러 전용. 6일마다 11:00 KST에 실행되어,
+"""Windows 작업 스케줄러 전용. 매주 월요일 11:00 KST에 실행되어,
 30분 뒤 Blogger OAuth 토큰 자동 재발급이 시작됨을 텔레그램으로 미리 알린다.
 (Google Cloud OAuth 앱이 'Testing' 상태라 refresh token이 7일마다 만료되는 것에 대한 대응.)
 """
