@@ -1,6 +1,7 @@
 """텔레그램 봇 API 클라이언트 (초안 전송 + 승인/피드백 폴링)."""
 import os
 import sys
+import tempfile
 
 import requests
 from dotenv import load_dotenv
@@ -40,8 +41,36 @@ def send_message(text):
     return resp.json()["result"]
 
 
+def _download_photo(file_id):
+    """파일 ID로 사진 원본을 받아 임시 파일로 저장하고 로컬 경로를 반환한다.
+    봇 토큰이 들어간 다운로드 URL은 여기서만 쓰고 절대 바깥(블로그 본문 등)에 노출하지 않는다 —
+    블로그에 쓸 땐 run_cycle.py가 이 파일을 읽어 base64 data URI로 바꿔 삽입한다."""
+    _require_config()
+    file_info = requests.get(
+        f"{API_BASE}/bot{BOT_TOKEN}/getFile",
+        params={"file_id": file_id},
+        timeout=15,
+    )
+    file_info.raise_for_status()
+    file_path = file_info.json()["result"]["file_path"]
+
+    content = requests.get(
+        f"{API_BASE}/file/bot{BOT_TOKEN}/{file_path}",
+        timeout=30,
+    )
+    content.raise_for_status()
+
+    suffix = os.path.splitext(file_path)[1] or ".jpg"
+    fd, local_path = tempfile.mkstemp(prefix="telegram_photo_", suffix=suffix)
+    with os.fdopen(fd, "wb") as f:
+        f.write(content.content)
+    return local_path
+
+
 def get_new_messages(offset):
-    """offset 이후의 새 메시지(내 chat에서 온 것만)와 다음 offset을 반환."""
+    """offset 이후의 새 메시지(내 chat에서 온 것만)와 다음 offset을 반환.
+    각 메시지는 {"text": str, "photo_path": str} 형태의 dict이며, 둘 중 있는 키만 채워진다
+    (텍스트만 보낸 메시지는 "text"만, 사진을 올린 메시지는 "photo_path"만 또는 캡션이 있으면 둘 다)."""
     _require_config()
     url = f"{API_BASE}/bot{BOT_TOKEN}/getUpdates"
     resp = requests.get(
@@ -61,9 +90,17 @@ def get_new_messages(offset):
             continue
         if str(msg.get("chat", {}).get("id")) != str(CHAT_ID):
             continue
-        text = msg.get("text")
+
+        entry = {}
+        text = msg.get("text") or msg.get("caption")
         if text:
-            messages.append(text)
+            entry["text"] = text
+        photo_sizes = msg.get("photo")
+        if photo_sizes:
+            # photo_sizes는 작은 것부터 큰 것 순서로 오므로 마지막(가장 큰 해상도)을 받는다.
+            entry["photo_path"] = _download_photo(photo_sizes[-1]["file_id"])
+        if entry:
+            messages.append(entry)
 
     return messages, next_offset
 

@@ -14,6 +14,12 @@
           상세 조회한 뒤 새로 글을 써서 `revise-draft ... --content-id 새ID`로 교체
      - pending이 없는 상태에서 온 메시지(ignored_messages)도 주제 요청일 수 있음 → 위 b)와 동일하게 처리
      - 그 외 무응답이면 아무것도 안 해도 됨
+     - 사용자가 사진을 텔레그램에 "사진"으로 직접 올렸을 수도 있다. 이 경우 check-replies 결과의
+       "photos"(또는 "ignored_photos")에 로컬로 받아둔 사진 파일 경로가 담겨 온다(텍스트의 이미지 URL과
+       달리 바로 파일 경로). 이걸 본문에 넣으려면 HTML에 `{{PHOTO:1}}`, `{{PHOTO:2}}`... 자리표시자를
+       (받은 순서대로) 써서 `<img src="{{PHOTO:1}}">` 같은 식으로 넣고, `save-draft`/`revise-draft`에
+       같은 순서로 `--photo-file <경로1> --photo-file <경로2> ...`를 넘기면 그 자리표시자가 base64
+       data URI로 자동 치환된다 (`_embed_photos` 참고. 이미지 호스팅 API가 없어 Blogger 본문에 직접 심는 방식).
   2) pending도 없고 사용자의 특별한 주제 요청도 없다면, 먼저 이번 달 마지막 3일인지 확인한다:
      `fetch-monthly-festivals` 실행
      - "not_due"면 아직 트리거 시점이 아니므로 3)으로 넘어간다 (평소엔 항상 이 상태)
@@ -28,8 +34,9 @@
        - 테마로 묶은 로스터 글은 지도에 위치를 표시한 이미지가 있으면 좋으므로, `save-draft`/`revise-draft`에
          `--reviewer-note "이 글에 넣을 축제 위치 지도 이미지를 AI로 생성해서 추가해주시면 반영해서 다시 보내드릴게요."`
          같은 안내를 덧붙여 텔레그램으로 요청한다 (이 안내는 블로그 본문이 아니라 텔레그램 메시지에만 붙음).
-         사용자가 이미지 URL을 답장하면 다음 check-replies의 피드백으로 들어오므로, 그 URL을 본문에
-         `<img>`로 넣어 `revise-draft`로 반영한다.
+         사용자가 이미지 URL(텍스트)이나 사진 파일을 직접 올리면 다음 check-replies의 피드백/photos로
+         들어오므로, URL이면 본문에 `<img>`로 넣고, 사진 파일이면 위에서 설명한 `{{PHOTO:n}}` +
+         `--photo-file` 방식으로 넣어 `revise-draft`로 반영한다.
        - `save-draft --content-id "id1,id2,..." ...`처럼 콤마로 여러 축제 id를 한 번에 넘기면,
          승인 후 그 축제들 전부가 posted_ids에 기록되어 다음 달 말 트리거 때 중복 없이 다뤄진다.
   3) 월말 축제 로스터가 해당 없으면(not_due/no_new_festivals), 격주 월요일인지 확인한다:
@@ -66,8 +73,9 @@
        있으면 `fetch-detail`로 사진·영업시간·메뉴를 보강한다. 확인 못 한 식당은 빼고 다른 식당을 고른다.
        TourAPI에 사진이 없는 식당은 다른 곳에서 사진을 찾지 말고, 본문의 그 식당 소주제 자리에
        `<!-- PHOTO NEEDED: <식당명> -->` 주석만 남긴 채 `--reviewer-note`로 "사진이 없는 식당: A, B —
-       사진(이미지 URL)을 직접 보내주시면 넣어서 다시 보내드릴게요." 같은 안내를 텔레그램에 붙인다.
-       사용자가 이미지 URL을 답장하면 그 자리에 `<img>`로 넣어 `revise-draft`로 반영한다.
+       사진(이미지 URL이나 사진 파일)을 직접 보내주시면 넣어서 다시 보내드릴게요." 같은 안내를 텔레그램에
+       붙인다. 사용자가 이미지 URL을 답장하면 그 자리에 `<img>`로, 사진을 직접 올리면 `{{PHOTO:n}}` +
+       `--photo-file`로 넣어 `revise-draft`로 반영한다.
        `save-draft --content-id "rest-a,rest-b,..." ...` (식당 id를 콤마로 모두 넘겨 중복 방지)
      - "no_restaurants_left"면 식당 목록을 다 다뤘다는 뜻이다. 최신 미쉐린 빕구르망 목록 등을
        WebSearch로 확인해 새 식당을 `state.add_restaurant(id, name, cuisine, source)`로 추가한 뒤
@@ -107,15 +115,17 @@
   python run_cycle.py fetch-next
   python run_cycle.py search-topic --keyword "Gyeongbokgung"
   python run_cycle.py fetch-detail --content-id 126508 --content-type-id 76
-  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508 --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."]
-  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID] --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."]
+  python run_cycle.py save-draft --title "..." --html-file draft.html --content-id 126508 --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."] [--photo-file p1.jpg --photo-file p2.jpg ...]
+  python run_cycle.py revise-draft --title "..." --html-file draft.html [--content-id 새ID] --summary-ko-file summary_ko.txt --meta-description "..." --labels "Festivals & Events" [--reviewer-note "..."] [--photo-file p1.jpg --photo-file p2.jpg ...]
   python run_cycle.py publish
   python run_cycle.py list-posts
   python run_cycle.py set-labels --post-id 123456789 --labels "Travel Tips,Transportation"
 """
 import argparse
+import base64
 import calendar
 import json
+import mimetypes
 import re
 import sys
 from datetime import datetime, timedelta
@@ -140,6 +150,13 @@ WEDNESDAY_ISO_WEEKDAY = 3  # 매주 수요일: 홀수 주 음식 메뉴 소개 /
 
 
 def cmd_check_replies(args):
+    """텔레그램 답장을 확인한다. 사용자가 텍스트로 이미지 URL을 보내는 대신 사진을 직접
+    올렸을 수도 있으므로, 받은 메시지들의 "photo_path"(로컬에 다운로드된 사진 파일 경로)도
+    함께 모아 반환한다 — 텍스트 필드만 보던 예전 방식은 사진이 들어오면 아무 text도 없어
+    조용히 버려지는 문제가 있었다(2026-11, 사용자가 사진을 올렸는데 반영이 안 된 사고).
+    에이전트는 feedback/ignored 응답의 "photos" 경로들을 본문에 넣고 싶으면, HTML에
+    `{{PHOTO:1}}`, `{{PHOTO:2}}`... 순서대로 자리표시자를 쓴 뒤 save-draft/revise-draft에
+    같은 순서로 `--photo-file`을 넘기면 된다 (`_embed_photos` 참고)."""
     offset = state.load_telegram_offset()
     messages, next_offset = telegram_client.get_new_messages(offset)
     state.save_telegram_offset(next_offset)
@@ -149,13 +166,20 @@ def cmd_check_replies(args):
         return
 
     pending = state.load_pending_draft()
-    last_message = messages[-1].strip()
+    texts = [m["text"].strip() for m in messages if m.get("text")]
+    photo_paths = [m["photo_path"] for m in messages if m.get("photo_path")]
+    last_text = texts[-1] if texts else ""
 
     if not pending:
-        print(json.dumps({"status": "no_pending_draft", "ignored_messages": messages}, ensure_ascii=False))
+        print(
+            json.dumps(
+                {"status": "no_pending_draft", "ignored_messages": texts, "ignored_photos": photo_paths},
+                ensure_ascii=False,
+            )
+        )
         return
 
-    if last_message.lower() in APPROVAL_WORDS:
+    if last_text.lower() in APPROVAL_WORDS and not photo_paths:
         result = blogger_client.publish_post(
             pending["title"],
             pending["html"],
@@ -173,7 +197,8 @@ def cmd_check_replies(args):
         json.dumps(
             {
                 "status": "feedback_received",
-                "feedback": last_message,
+                "feedback": last_text,
+                "photos": photo_paths,
                 "pending_draft": pending,
             },
             ensure_ascii=False,
@@ -399,6 +424,25 @@ def _html_to_preview_text(html):
     return text
 
 
+def _embed_photos(html, photo_files):
+    """사용자가 텔레그램으로 직접 올린 사진을 블로그 본문에 끼워 넣는다.
+    에이전트가 HTML에 써둔 `{{PHOTO:1}}`, `{{PHOTO:2}}`... 자리표시자를, --photo-file로
+    넘긴 순서에 맞춰 base64 data URI로 치환한다 (예: `<img src="{{PHOTO:1}}">`).
+    이미지 호스팅 API가 없어서 Blogger HTML에 바로 data URI로 심는 방식 — 이러면 사진 자체가
+    큰 base64 문자열로 바뀌지만, _html_to_preview_text가 <img> 태그를 통째로 "[image]"로
+    바꿔 보내므로 텔레그램 미리보기 메시지는 영향을 받지 않는다."""
+    for i, path in enumerate(photo_files, start=1):
+        placeholder = "{{PHOTO:%d}}" % i
+        if placeholder not in html:
+            continue
+        with open(path, "rb") as f:
+            data = f.read()
+        mime = mimetypes.guess_type(path)[0] or "image/jpeg"
+        b64 = base64.b64encode(data).decode("ascii")
+        html = html.replace(placeholder, f"data:{mime};base64,{b64}")
+    return html
+
+
 def _reviewer_note_block(args):
     note = getattr(args, "reviewer_note", None)
     return f"\n\n💡 참고: {note}" if note else ""
@@ -415,6 +459,7 @@ def _published_message(result, meta_description):
 
 def cmd_save_draft(args):
     html = _read_html(args)
+    html = _embed_photos(html, args.photo_file)
     summary_ko = _read_summary_ko(args)
     draft = {
         "content_id": args.content_id,
@@ -440,6 +485,7 @@ def cmd_revise_draft(args):
         print(json.dumps({"status": "error", "message": "대기 중인 초안이 없습니다"}, ensure_ascii=False))
         return
     html = _read_html(args)
+    html = _embed_photos(html, args.photo_file)
     summary_ko = _read_summary_ko(args)
     pending["title"] = args.title
     pending["html"] = html
@@ -520,6 +566,13 @@ def main():
     p_save.add_argument("--meta-description", type=_meta_description, help="검색결과 요약(searchDescription)용 영문 150자 이내 문구")
     p_save.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 왼쪽 메뉴 카테고리 가젯에 쓰임")
     p_save.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
+    p_save.add_argument(
+        "--photo-file",
+        action="append",
+        default=[],
+        help="사용자가 텔레그램으로 올린 사진 파일 경로(check-replies의 photos). 여러 번 지정 가능하며, "
+        "HTML 본문의 {{PHOTO:1}}, {{PHOTO:2}}... 자리표시자를 순서대로 이 파일들로 채운다",
+    )
 
     p_revise = sub.add_parser("revise-draft")
     p_revise.add_argument("--title", required=True)
@@ -529,6 +582,13 @@ def main():
     p_revise.add_argument("--meta-description", type=_meta_description, help="검색결과 요약(searchDescription)용 영문 150자 이내 문구")
     p_revise.add_argument("--labels", help="Blogger 라벨(카테고리) 콤마 구분 목록, 영문으로. 예: 'Travel Tips,Transportation'. 생략하면 기존 라벨 유지")
     p_revise.add_argument("--reviewer-note", help="텔레그램 메시지에만 덧붙이는 안내 문구 (예: 지도 이미지 추가 요청). 블로그 본문에는 안 들어감")
+    p_revise.add_argument(
+        "--photo-file",
+        action="append",
+        default=[],
+        help="사용자가 텔레그램으로 올린 사진 파일 경로(check-replies의 photos). 여러 번 지정 가능하며, "
+        "HTML 본문의 {{PHOTO:1}}, {{PHOTO:2}}... 자리표시자를 순서대로 이 파일들로 채운다",
+    )
 
     sub.add_parser("publish")
 
